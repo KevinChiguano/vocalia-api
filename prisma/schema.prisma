@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum match_status {
+  programado
+  en_curso
+  finalizado
+  suspendido
+  cancelado
+}
+
+enum sanction_type {
+  amarilla
+  roja_directa
+  doble_amarilla
+}
+
+// ============================================================
+// MODELO GOALS
+// ============================================================
+
+model goals {
+  goal_id     BigInt   @id @default(autoincrement())
+  match_id    BigInt
+  player_id   BigInt
+  event_time  DateTime @db.Timestamptz(6)
+  is_own_goal Boolean? @default(false)
+
+  match  matches @relation(fields: [match_id], references: [match_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_goals_match")
+  player players @relation(fields: [player_id], references: [player_id], onUpdate: NoAction, map: "fk_goals_player")
+
+  @@index([match_id], map: "idx_goals_match")
+  @@index([event_time], map: "idx_goals_time")
+}
+
+// ============================================================
+// MODELO MATCHES
+// ============================================================
+
+model matches {
+  match_id      BigInt       @id @default(autoincrement())
+  tournament_id BigInt
+  local_team_id BigInt
+  away_team_id  BigInt
+  category      String?
+  stage         String
+  match_day     Int?
+  match_date    DateTime?    @db.Timestamptz(6)
+  location      String?
+  status        match_status @default(programado)
+  local_score   Int          @default(0)
+  away_score    Int          @default(0)
+  video_url     String?
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+
+  localTeam  teams       @relation("matches_local_team_idToteams", fields: [local_team_id], references: [team_id], onUpdate: NoAction, map: "fk_matches_local_team")
+  awayTeam   teams       @relation("matches_away_team_idToteams", fields: [away_team_id], references: [team_id], onUpdate: NoAction, map: "fk_matches_away_team")
+  tournament tournaments @relation(fields: [tournament_id], references: [tournament_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_matches_tournament")
+
+  goals         goals[]
+  sanctions     sanctions[]
+  substitutions substitutions[]
+  vocalias      vocalias[]
+  matchPlayers  match_players[]
+
+  @@index([tournament_id], map: "idx_matches_tournament")
+}
+
+// ============================================================
+// MODELO PLAYERS
+// ============================================================
+
+model players {
+  player_id       BigInt    @id @default(autoincrement())
+  player_name     String
+  player_lastname String?
+  player_number   Int?
+  player_dni      String    @unique
+  card_image_url  String?
+  team_id         BigInt
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime? @db.Timestamptz(6)
+  is_active       Boolean   @default(true)
+
+  goals     goals[]
+  team      teams       @relation(fields: [team_id], references: [team_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_players_team")
+  sanctions sanctions[]
+
+  playerInSubstitutions  substitutions[] @relation("substitutions_player_inToplayers")
+  playerOutSubstitutions substitutions[] @relation("substitutions_player_outToplayers")
+
+  awayCaptainVocalias  vocalias[]      @relation("vocalias_away_captain_idToplayers")
+  localCaptainVocalias vocalias[]      @relation("vocalias_local_captain_idToplayers")
+  matchPlayers         match_players[]
+
+  @@index([team_id], map: "idx_players_team")
+}
+
+// ============================================================
+// MODELO ROLES & USERS (Sin cambios)
+// ============================================================
+
+model roles {
+  rol_id   BigInt  @id @default(autoincrement())
+  rol_name String  @unique
+  users    users[]
+}
+
+model users {
+  user_id       BigInt     @id @default(autoincrement())
+  user_name     String
+  user_email    String     @unique
+  user_password String
+  rol_id        BigInt
+  is_active     Boolean?   @default(true)
+  roles         roles      @relation(fields: [rol_id], references: [rol_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_rol")
+  vocaliases    vocalias[]
+}
+
+// ============================================================
+// MODELO SANCTIONS
+// ============================================================
+
+model sanctions {
+  sanction_id BigInt        @id @default(autoincrement())
+  match_id    BigInt
+  player_id   BigInt
+  type        sanction_type
+  description String?
+  event_time  DateTime      @db.Timestamptz(6)
+
+  match  matches @relation(fields: [match_id], references: [match_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sanctions_match")
+  player players @relation(fields: [player_id], references: [player_id], onUpdate: NoAction, map: "fk_sanctions_player")
+
+  @@index([match_id], map: "idx_sanctions_match")
+  @@index([event_time], map: "idx_sanctions_time")
+}
+
+// ============================================================
+// MODELO SUBSTITUTIONS
+// ============================================================
+
+model substitutions {
+  substitution_id BigInt   @id @default(autoincrement())
+  match_id        BigInt
+  player_out      BigInt
+  player_in       BigInt
+  event_time      DateTime @db.Timestamptz(6)
+
+  playerIn  players @relation("substitutions_player_inToplayers", fields: [player_in], references: [player_id], onUpdate: NoAction, map: "fk_subs_in")
+  match     matches @relation(fields: [match_id], references: [match_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_subs_match")
+  playerOut players @relation("substitutions_player_outToplayers", fields: [player_out], references: [player_id], onUpdate: NoAction, map: "fk_subs_out")
+
+  @@index([match_id], map: "idx_subs_match")
+  @@index([event_time], map: "idx_subs_time")
+}
+
+// ============================================================
+// MODELO TEAMS
+// ============================================================
+
+model teams {
+  team_id       BigInt   @id @default(autoincrement())
+  team_name     String   @unique
+  team_logo     String?
+  team_category String?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  awayMatches  matches[] @relation("matches_away_team_idToteams")
+  localMatches matches[] @relation("matches_local_team_idToteams")
+
+  players         players[]
+  matchPlayers    match_players[]
+  tournamentTeams tournament_teams[]
+}
+
+// ============================================================
+// MODELO TOURNAMENTS
+// ============================================================
+
+model tournaments {
+  tournament_id BigInt    @id @default(autoincrement())
+  name          String
+  start_date    DateTime? @db.Date
+  end_date      DateTime? @db.Date
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+
+  matches         matches[]
+  tournamentTeams tournament_teams[]
+}
+
+// ============================================================
+// MODELO VOCALIAS
+// ============================================================
+
+model vocalias {
+  vocalia_id       BigInt    @id @default(autoincrement())
+  match_id         BigInt    @unique
+  vocal_user_id    BigInt
+  local_captain_id BigInt?
+  away_captain_id  BigInt?
+  observations     String?
+  vocalia_data     Json?
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+
+  awayCaptain  players? @relation("vocalias_away_captain_idToplayers", fields: [away_captain_id], references: [player_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_vocalias_away_cap")
+  localCaptain players? @relation("vocalias_local_captain_idToplayers", fields: [local_captain_id], references: [player_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_vocalias_local_cap")
+  match        matches  @relation(fields: [match_id], references: [match_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vocalias_match")
+  vocalUser    users    @relation(fields: [vocal_user_id], references: [user_id], onDelete: Restrict, map: "fk_vocalias_vocal_user")
+
+  @@index([match_id], map: "idx_vocalias_match")
+  @@index([vocal_user_id])
+}
+
+// ============================================================
+// MODELO MATCH_PLAYERS (Planilla del Partido)
+// ============================================================
+
+model match_players {
+  match_player_id BigInt @id @default(autoincrement())
+
+  match_id  BigInt
+  player_id BigInt
+  team_id   BigInt
+
+  is_starting Boolean @default(false) // titular o suplente
+
+  // Relaciones
+  match  matches @relation(fields: [match_id], references: [match_id], onDelete: Cascade)
+  player players @relation(fields: [player_id], references: [player_id], onDelete: Cascade)
+  team   teams   @relation(fields: [team_id], references: [team_id], onDelete: Cascade)
+
+  // Un jugador solo puede estar una vez por partido
+  @@unique([match_id, player_id], map: "uq_match_player")
+  @@index([match_id], map: "idx_match_players_match")
+  @@index([team_id], map: "idx_match_players_team")
+  @@index([player_id], map: "idx_match_players_player")
+}
+
+model tournament_teams {
+  tournament_team_id BigInt @id @default(autoincrement())
+
+  tournament_id BigInt
+  team_id       BigInt
+
+  played Int @default(0) // PJ
+  won    Int @default(0) // PG
+  drawn  Int @default(0) // PE
+  lost   Int @default(0) // PP
+
+  goals_for     Int @default(0) // GF
+  goals_against Int @default(0) // GC
+  goal_diff     Int @default(0) // DG
+
+  points Int @default(0)
+
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+  // Relaciones
+  tournament tournaments @relation(fields: [tournament_id], references: [tournament_id], onDelete: Cascade)
+  team       teams       @relation(fields: [team_id], references: [team_id], onDelete: Cascade)
+
+  @@unique([tournament_id, team_id], name: "uq_tournament_team", map: "uq_tournament_team")
+  @@index([tournament_id])
+  @@index([team_id])
+}
