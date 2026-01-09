@@ -96,6 +96,10 @@ Ejecutar las migraciones de Prisma:
 npx prisma migrate dev
 ```
 
+```bash
+npx prisma generate
+```
+
 Opcionalmente, abrir Prisma Studio:
 
 ```bash

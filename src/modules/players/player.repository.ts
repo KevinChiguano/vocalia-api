@@ -1,7 +1,7 @@
 // player.repository.ts
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export const playerSelectFields = {
   player_id: true,
@@ -10,11 +10,18 @@ export const playerSelectFields = {
   player_number: true,
   player_dni: true,
   card_image_url: true,
+  birth_date: true,
   team_id: true,
   team: {
     select: {
       team_id: true,
       team_name: true,
+    },
+  },
+  category: {
+    select: {
+      category_id: true,
+      name: true,
     },
   },
   is_active: true,

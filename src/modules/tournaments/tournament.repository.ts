@@ -1,10 +1,11 @@
 // tournament.repository.ts
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export const tournamentSelectFields = {
   tournament_id: true,
+  league_id: true,
   name: true,
   start_date: true,
   end_date: true,

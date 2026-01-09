@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { tournamentTeamService } from "./tournament-team.service";
-import { ok } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { ok } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
 
 export const tournamentTeamController = {
   create: async (req: Request, res: Response) => {

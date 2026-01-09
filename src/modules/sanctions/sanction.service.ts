@@ -1,14 +1,14 @@
 // sanction.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import { convertToEcuadorTime } from "@/utils/convert.time";
 import { CreateSanctionInput, UpdateSanctionInput } from "./sanction.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import {
   sanctionRepository,
   sanctionSelectFields,
 } from "./sanction.repository";
-import type { PrismaTx } from "../../config/prisma.types";
-import { invalidateStatsByMatch } from "../../utils/cache.stats";
+import type { PrismaTx } from "@/config/prisma.types";
+import { invalidateStatsByMatch } from "@/utils/cache.stats";
 
 const mapSanctionKeys = (sanction: any) => {
   if (!sanction) return null;
@@ -130,7 +130,19 @@ export class SanctionService {
   }
 
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
-    const where = filter;
+    const where: any = {};
+
+    if (filter.matchId !== undefined) {
+      where.match_id = filter.matchId;
+    }
+
+    if (filter.playerId !== undefined) {
+      where.player_id = filter.playerId;
+    }
+
+    if (filter.type !== undefined) {
+      where.type = filter.type;
+    }
 
     const result = await paginate(
       sanctionRepository, // Pasamos el Repository al paginador

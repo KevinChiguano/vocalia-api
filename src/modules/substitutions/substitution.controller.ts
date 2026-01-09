@@ -1,15 +1,14 @@
-// substitution.controller.ts
 import { Request, Response } from "express";
 import { substitutionService } from "./substitution.service";
-import { ok, fail } from "../../utils/response";
+import { ok, fail } from "@/utils/response";
 import { CreateSubstitutionInput } from "./substitution.schema";
-// Asumimos handlePrismaError para mantener la consistencia
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
+import { parseNumber } from "@/utils/parseFilters";
 
 export const substitutionController = {
   create: async (req: Request, res: Response) => {
     try {
-      const validated = req.body; // Cambio de nombre de método: createSubstitution -> create
+      const validated = req.body;
       const substitution = await substitutionService.create(validated);
       return res.status(201).json(ok(substitution));
     } catch (e: any) {
@@ -25,7 +24,7 @@ export const substitutionController = {
         return res
           .status(400)
           .json(fail("Se espera un array no vacío de sustituciones."));
-      } // Cambio de nombre de método: createSubstitutionsBulk -> createBulk
+      }
 
       const result = await substitutionService.createBulk(validatedArray);
 
@@ -42,7 +41,7 @@ export const substitutionController = {
 
       if (isNaN(id)) {
         return res.status(400).json(fail("El ID debe ser un número válido."));
-      } // Cambio de nombre de método: updateSubstitution -> update
+      }
       const substitution = await substitutionService.update(id, validated);
       return res.json(ok(substitution));
     } catch (e: any) {
@@ -56,7 +55,7 @@ export const substitutionController = {
 
       if (isNaN(id)) {
         return res.status(400).json(fail("El ID debe ser un número válido."));
-      } // Cambio de nombre de método: deleteSubstitution -> delete
+      }
 
       await substitutionService.delete(id);
 
@@ -72,7 +71,7 @@ export const substitutionController = {
 
       if (isNaN(id)) {
         return res.status(400).json(fail("El ID debe ser un número válido."));
-      } // Cambio de nombre de método: getSubstitutionById -> getById
+      }
 
       const substitution = await substitutionService.getById(id);
 
@@ -92,20 +91,13 @@ export const substitutionController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-
-    if (req.query.matchId) {
-      filter.match_id = Number(req.query.matchId);
-    }
-    if (req.query.playerOut) {
-      filter.player_out = Number(req.query.playerOut);
-    }
-    if (req.query.playerIn) {
-      filter.player_in = Number(req.query.playerIn);
-    }
+    const filter = {
+      matchId: parseNumber(req.query.matchId, { min: 1 }),
+      playerOut: parseNumber(req.query.playerOut, { min: 1 }),
+      playerIn: parseNumber(req.query.playerIn, { min: 1 }),
+    };
 
     try {
-      // Cambio de nombre de método: getSubstitutions -> list
       const result = await substitutionService.list(page, limit, filter);
       return res.json(ok(result));
     } catch (e: any) {

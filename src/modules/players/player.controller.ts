@@ -1,8 +1,9 @@
 // player.controller.ts
 import { Request, Response } from "express";
 import { playerService } from "./player.service";
-import { ok, fail } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler"; // Asumido para consistencia
+import { ok, fail } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler"; // Asumido para consistencia
+import { parseBoolean, parseString, parseNumber } from "@/utils/parseFilters";
 
 export const playerController = {
   create: async (req: Request, res: Response) => {
@@ -57,9 +58,11 @@ export const playerController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-
-    if (req.query.active) filter.is_active = req.query.active === "true";
+    const filter = {
+      is_active: parseBoolean(req.query.active),
+      search: parseString(req.query.search),
+      teamId: parseNumber(req.query.teamId, { min: 1 }),
+    };
 
     try {
       // Cambio de nombre de método: getPlayers -> list

@@ -1,10 +1,11 @@
 // team.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import { convertToEcuadorTime } from "@/utils/convert.time";
 import { CreateTeamInput, UpdateTeamInput } from "./team.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import { teamRepository, teamSelectFields } from "./team.repository"; // Importación clave
-import type { PrismaTx } from "../../config/prisma.types";
+import type { PrismaTx } from "@/config/prisma.types";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 
 const mapTeamKeys = (team: any) => {
   if (!team) return null;
@@ -13,7 +14,12 @@ const mapTeamKeys = (team: any) => {
     id: team.team_id,
     name: team.team_name,
     logo: team.team_logo,
-    category: team.team_category,
+    category: team.category
+      ? {
+          id: team.category.category_id,
+          name: team.category.name,
+        }
+      : null,
     isActive: team.is_active,
     createdAt: convertToEcuadorTime(team.created_at),
   };
@@ -22,11 +28,10 @@ const mapTeamKeys = (team: any) => {
 export class TeamService {
   async create(data: CreateTeamInput, tx?: PrismaTx) {
     const newTeam = await teamRepository.create(
-      // Uso del Repository
       {
         team_name: data.name,
         team_logo: data.logo,
-        team_category: data.category,
+        category_id: data.categoryId ?? null, // Use null if undefined
         is_active: data.isActive ?? true,
       },
       tx
@@ -40,7 +45,11 @@ export class TeamService {
 
     if (data.name) updateData.team_name = data.name;
     if (data.logo) updateData.team_logo = data.logo;
-    if (data.category) updateData.team_category = data.category;
+
+    if (data.categoryId !== undefined) {
+      updateData.category_id = data.categoryId;
+    }
+
     if (typeof data.isActive === "boolean")
       updateData.is_active = data.isActive;
 
@@ -49,7 +58,7 @@ export class TeamService {
     }
 
     try {
-      const updatedTeam = await teamRepository.update(id, updateData, tx); // Uso del Repository
+      const updatedTeam = await teamRepository.update(id, updateData, tx);
       return mapTeamKeys(updatedTeam);
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
@@ -79,7 +88,18 @@ export class TeamService {
   }
 
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
-    const where = filter;
+    const where: any = {};
+
+    if (filter.category !== undefined) {
+      where.team_category = filter.category;
+    }
+
+    Object.assign(
+      where,
+      buildBooleanFilter("is_active", filter.is_active),
+      buildSearchFilter(filter.search, ["team_name"])
+    );
+
     const result = await paginate(
       teamRepository, // Pasamos el Repository al paginador
       { page, limit },

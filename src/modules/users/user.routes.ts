@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { userController } from "./user.controller";
-import { authMiddleware } from "../../middlewares/auth.middleware";
-import { roleGuard } from "../../middlewares/role.guard";
-import { validateSchema } from "../../middlewares/validateSchema";
+import { authMiddleware } from "@/middlewares/auth.middleware";
+import { roleGuard } from "@/middlewares/role.guard";
+import { validateSchema } from "@/middlewares/validateSchema";
 import { createUserSchema, updateUserSchema } from "./user.schema";
-import { strictLimiter } from "../../middlewares/rateLimiter.middleware";
+import { strictLimiter } from "@/middlewares/rateLimiter.middleware";
 
 const router = Router();
 
@@ -33,7 +33,73 @@ router.use(authMiddleware.verifyToken);
  *               $ref: '#/components/schemas/UserResponse'
  *       400:
  *         description: Error de validación o email duplicado
- *
+ */
+router.post(
+  "/",
+  strictLimiter,
+  roleGuard(["ADMIN"]),
+  validateSchema(createUserSchema),
+  userController.create
+);
+
+/**
+ * @openapi
+ * /users/{id}:
+ *   put:
+ *     summary: Actualizar usuario
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserRequest'
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ */
+router.put(
+  "/:id",
+  roleGuard(["ADMIN"]),
+  validateSchema(updateUserSchema),
+  userController.update
+);
+
+/**
+ * @openapi
+ * /users/{id}:
+ *   delete:
+ *     summary: Eliminar usuario
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado
+ */
+router.delete("/:id", roleGuard(["ADMIN"]), userController.delete);
+
+/**
+ * @openapi
+ * /users:
  *   get:
  *     summary: Listar usuarios
  *     tags: [Users]
@@ -60,6 +126,7 @@ router.use(authMiddleware.verifyToken);
  *             schema:
  *               $ref: '#/components/schemas/UserListResponse'
  */
+router.get("/", userController.list);
 
 /**
  * @openapi
@@ -84,65 +151,7 @@ router.use(authMiddleware.verifyToken);
  *               $ref: '#/components/schemas/UserResponse'
  *       404:
  *         description: Usuario no encontrado
- *
- *   put:
- *     summary: Actualizar usuario
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: number
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateUserRequest'
- *     responses:
- *       200:
- *         description: Usuario actualizado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserResponse'
- *
- *   delete:
- *     summary: Eliminar usuario
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: number
- *     responses:
- *       200:
- *         description: Usuario eliminado
  */
-
-router.post(
-  "/",
-  strictLimiter,
-  roleGuard(["ADMIN"]),
-  validateSchema(createUserSchema),
-  userController.create
-);
-router.put(
-  "/:id",
-  roleGuard(["ADMIN"]),
-  validateSchema(updateUserSchema),
-  userController.update
-);
-router.delete("/:id", roleGuard(["ADMIN"]), userController.delete);
-
-// Rutas públicas para cualquier usuario autenticado
-router.get("/", userController.list);
 router.get("/:id", userController.getById);
 
 export default router;

@@ -1,6 +1,6 @@
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export const tournamentTeamSelectFields = {
   tournament_team_id: true,
@@ -20,6 +20,12 @@ export const tournamentTeamSelectFields = {
     select: {
       team_id: true,
       team_name: true,
+    },
+  },
+  category_id: true,
+  category: {
+    select: {
+      name: true,
     },
   },
 };

@@ -1,6 +1,6 @@
 // acta.service.ts
-import prisma from "../../config/prisma";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import prisma from "@/config/prisma";
+import { convertToEcuadorTime } from "@/utils/convert.time";
 
 export class ActaService {
   async getByMatchId(matchId: number) {

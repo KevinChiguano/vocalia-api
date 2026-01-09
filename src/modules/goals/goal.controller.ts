@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { goalService } from "./goal.service";
-import { ok, fail } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { ok, fail } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
+import { parseNumber, parseBoolean } from "@/utils/parseFilters";
 
 export const goalController = {
   create: async (req: Request, res: Response) => {
@@ -55,24 +56,21 @@ export const goalController = {
 
   list: async (req: Request, res: Response) => {
     try {
-      const page = Number(req.query.page || 1);
-      const limit = Number(req.query.limit || 10);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
 
-      const filter: any = {};
-
-      if (req.query.matchId)
-        filter.match_id = BigInt(req.query.matchId as string);
-
-      if (req.query.playerId)
-        filter.player_id = BigInt(req.query.playerId as string);
-
-      if (req.query.isOwnGoal)
-        filter.is_own_goal = req.query.isOwnGoal === "true";
+      const filter = {
+        matchId: parseNumber(req.query.matchId, { min: 1 }),
+        playerId: parseNumber(req.query.playerId, { min: 1 }),
+        isOwnGoal: parseBoolean(req.query.isOwnGoal),
+      };
 
       const result = await goalService.list(page, limit, filter);
       return res.json(ok(result));
     } catch (e: any) {
-      return fail("Error al obtener la lista de goles.");
+      return res
+        .status(500)
+        .json(fail("Error al obtener la lista de goles."));
     }
   },
 };

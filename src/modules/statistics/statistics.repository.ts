@@ -1,6 +1,6 @@
 // statistics.repository.ts
-import prisma from "../../config/prisma";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export class StatisticsRepository {
   private getClient(tx?: PrismaTx) {
@@ -148,6 +148,65 @@ export class StatisticsRepository {
       },
       take: limit,
     });
+  }
+
+  async dashboardCounts(tournamentId: number) {
+    const client = this.getClient();
+
+    const [teams, players, matches, goals, sanctions] = await Promise.all([
+      client.tournament_teams.count({
+        where: { tournament_id: BigInt(tournamentId) },
+      }),
+      client.players.count({
+        where: {
+          matchPlayers: {
+            some: { match: { tournament_id: BigInt(tournamentId) } },
+          },
+        },
+      }),
+      client.matches.count({ where: { tournament_id: BigInt(tournamentId) } }),
+      client.goals.count({
+        where: {
+          match: { tournament_id: BigInt(tournamentId) },
+          is_own_goal: false,
+        },
+      }),
+      client.sanctions.groupBy({
+        by: ["type"],
+        where: { match: { tournament_id: BigInt(tournamentId) } },
+        _count: { type: true },
+      }),
+    ]);
+
+    return { teams, players, matches, goals, sanctions };
+  }
+
+  async globalDashboardCounts(tx?: PrismaTx) {
+    const client = this.getClient(tx);
+
+    const [tournaments, teams, players, matches, goals, sanctions] =
+      await Promise.all([
+        client.tournaments.count(),
+        client.teams.count(),
+        client.players.count(),
+        client.matches.count(),
+        client.goals.count({
+          where: { is_own_goal: false },
+        }),
+        client.sanctions.groupBy({
+          by: ["type"],
+          _count: { type: true },
+        }),
+      ]);
+
+    return {
+      tournaments,
+      teams,
+      players,
+      matches,
+      goals,
+      sanctions,
+    };
   }
 }
 

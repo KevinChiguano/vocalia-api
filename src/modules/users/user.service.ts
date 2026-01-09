@@ -1,11 +1,15 @@
 // user.service.ts
 import * as argon2 from "argon2";
-import { env } from "../../config/env";
+import { env } from "@/config/env";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import type { CreateUserInput, UpdateUserInput } from "./user.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import { userRepository, userSelectFields } from "./user.repository"; // Importación clave
-import type { PrismaTx } from "../../config/prisma.types";
+import type { PrismaTx } from "@/config/prisma.types";
+import {
+  buildSearchFilter,
+  buildBooleanFilter,
+} from "@/utils/filter.builder";
 
 // Opciones de Argon2 (se mantiene aquí como lógica de negocio/seguridad)
 const argonOptions = {
@@ -102,11 +106,23 @@ export class UserService {
   }
 
   async list(page: number, limit: number, filter: any = {}, tx?: PrismaTx) {
+    const where: any = {};
+
+    if (filter.rolId !== undefined) {
+      where.rol_id = filter.rolId;
+    }
+
+    Object.assign(
+      where,
+      buildBooleanFilter("is_active", filter.is_active),
+      buildSearchFilter(filter.search, ["user_name", "user_email"])
+    );
+
     const result = await paginate(
       userRepository, // Pasamos la instancia del repository
       { page, limit },
       {
-        where: filter,
+        where,
         orderBy: { user_id: "desc" },
         select: userSelectFields,
       },

@@ -12,10 +12,7 @@ const teamBase = {
     .max(255, "La URL del logo no puede superar los 255 caracteres.")
     .optional(),
 
-  category: z
-    .string()
-    .min(3, "La categoría debe tener al menos 3 caracteres.")
-    .max(50, "La categoría no puede superar los 50 caracteres."),
+  categoryId: z.number().int().positive().optional(),
 
   isActive: z.boolean().optional(),
 };

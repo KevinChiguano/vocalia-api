@@ -1,6 +1,6 @@
-import prisma from "../../config/prisma";
+import prisma from "@/config/prisma";
 import * as argon2 from "argon2";
-import { signToken } from "../../utils/jwt";
+import { signToken } from "@/utils/jwt";
 
 export const authService = {
   login: async (email: string, password: string) => {
@@ -30,6 +30,22 @@ export const authService = {
         rol: user.roles.rol_name,
       },
       token,
+    };
+  },
+  me: async (userId: number) => {
+    const user = await prisma.users.findUnique({
+      where: { user_id: userId },
+      include: { roles: true },
+    });
+
+    if (!user || !user.is_active) return null;
+
+    return {
+      id: user.user_id,
+      name: user.user_name,
+      email: user.user_email,
+      isActive: user.is_active,
+      rol: user.roles.rol_name,
     };
   },
 };

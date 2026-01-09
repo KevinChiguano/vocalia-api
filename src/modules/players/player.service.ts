@@ -1,10 +1,14 @@
 // player.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import { convertToEcuadorTime } from "@/utils/convert.time";
 import type { CreatePlayerInput, UpdatePlayerInput } from "./player.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import { playerRepository, playerSelectFields } from "./player.repository"; // Importación clave
-import type { PrismaTx } from "../../config/prisma.types";
+import type { PrismaTx } from "@/config/prisma.types";
+import {
+  buildSearchFilter,
+  buildBooleanFilter,
+} from "@/utils/filter.builder";
 
 const mapPlayerKeys = (player: any) => {
   if (!player) return null;
@@ -15,10 +19,17 @@ const mapPlayerKeys = (player: any) => {
     number: player.player_number,
     dni: player.player_dni,
     cardUrl: player.card_image_url,
+    birthDate: player.birth_date ? player.birth_date.toISOString().split('T')[0] : null,
     team: player.team
       ? {
           id: player.team.team_id,
           name: player.team.team_name,
+        }
+      : null,
+    category: player.category
+      ? {
+          id: player.category.category_id,
+          name: player.category.name,
         }
       : null,
     isActive: player.is_active,
@@ -36,7 +47,9 @@ export class PlayerService {
         player_number: data.number,
         player_dni: data.dni,
         card_image_url: data.cardUrl,
+        birth_date: data.birthDate ? new Date(data.birthDate) : undefined,
         team_id: data.teamId,
+        category_id: data.categoryId,
         is_active: data.isActive ?? true,
       },
       tx
@@ -53,7 +66,9 @@ export class PlayerService {
     if (data.number) updateData.player_number = data.number;
     if (data.dni) updateData.player_dni = data.dni;
     if (data.cardUrl) updateData.card_image_url = data.cardUrl;
+    if (data.birthDate) updateData.birth_date = new Date(data.birthDate);
     if (data.teamId) updateData.team_id = data.teamId;
+    if (data.categoryId) updateData.category_id = data.categoryId;
     if (typeof data.isActive === "boolean")
       updateData.is_active = data.isActive;
 
@@ -98,7 +113,17 @@ export class PlayerService {
   }
 
   async list(page: number, limit: number, filter: any = {}, tx?: PrismaTx) {
-    const where = filter;
+    const where: any = {};
+
+    if (filter.teamId !== undefined) {
+      where.team_id = filter.teamId;
+    }
+
+    Object.assign(
+      where,
+      buildBooleanFilter("is_active", filter.is_active),
+      buildSearchFilter(filter.search, ["player_name", "player_lastname", "player_dni"])
+    );
 
     const result = await paginate(
       playerRepository, // Pasamos el Repository al paginador

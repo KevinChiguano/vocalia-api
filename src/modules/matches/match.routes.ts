@@ -1,15 +1,37 @@
 import { Router } from "express";
 import { matchController } from "./match.controller";
-import { authMiddleware } from "../../middlewares/auth.middleware";
-import { roleGuard } from "../../middlewares/role.guard";
-import { validateSchema } from "../../middlewares/validateSchema";
+import { authMiddleware } from "@/middlewares/auth.middleware";
+import { roleGuard } from "@/middlewares/role.guard";
+import { validateSchema } from "@/middlewares/validateSchema";
 import { createMatchSchema, updateMatchSchema } from "./match.schema";
-import { strictLimiter } from "../../middlewares/rateLimiter.middleware";
+import { strictLimiter } from "@/middlewares/rateLimiter.middleware";
 
 const router = Router();
 
 router.use(authMiddleware.verifyToken);
 
+/**
+ * @openapi
+ * /matches:
+ *   post:
+ *     tags: [Matches]
+ *     summary: Crear un partido
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateMatchRequest'
+ *     responses:
+ *       201:
+ *         description: Partido creado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MatchResponse'
+ */
 router.post(
   "/",
   strictLimiter,
@@ -18,6 +40,34 @@ router.post(
   matchController.create
 );
 
+/**
+ * @openapi
+ * /matches/{id}:
+ *   put:
+ *     tags: [Matches]
+ *     summary: Actualizar partido
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateMatchRequest'
+ *     responses:
+ *       200:
+ *         description: Partido actualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MatchResponse'
+ */
 router.put(
   "/:id",
   roleGuard(["ADMIN"]),
@@ -25,10 +75,87 @@ router.put(
   matchController.update
 );
 
+/**
+ * @openapi
+ * /matches/{id}:
+ *   delete:
+ *     tags: [Matches]
+ *     summary: Eliminar partido
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Partido eliminado
+ */
 router.delete("/:id", roleGuard(["ADMIN"]), matchController.delete);
 
+/**
+ * @openapi
+ * /matches:
+ *   get:
+ *     tags: [Matches]
+ *     summary: Listar partidos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: tournamentId
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: stage
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lista de partidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MatchListResponse'
+ */
 router.get("/", matchController.list);
 
+/**
+ * @openapi
+ * /matches/{id}:
+ *   get:
+ *     tags: [Matches]
+ *     summary: Obtener partido por ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Partido encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MatchResponse'
+ */
 router.get("/:id", matchController.getById);
 
 export default router;

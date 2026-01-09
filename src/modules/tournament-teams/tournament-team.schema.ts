@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createTournamentTeamSchema = z.object({
   tournamentId: z.number().int().positive(),
   teamId: z.number().int().positive(),
+  categoryId: z.number().int().positive().optional(),
 });
 
 export const updateTournamentTeamSchema = z.object({

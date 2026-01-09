@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { vocaliaService } from "./vocalia.service";
-import { ok } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { ok } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
 
 export const vocaliaController = {
   create: async (req: Request, res: Response) => {

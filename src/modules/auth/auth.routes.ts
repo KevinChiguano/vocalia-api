@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { authController } from "./auth.controller";
-import { validateSchema } from "../../middlewares/validateSchema";
+import { validateSchema } from "@/middlewares/validateSchema";
 import { loginSchema } from "./auth.schema";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 
 const router = Router();
 
@@ -37,5 +38,7 @@ const router = Router();
  */
 
 router.post("/login", validateSchema(loginSchema), authController.login);
+
+router.get("/me", authMiddleware.verifyToken, authController.me);
 
 export default router;

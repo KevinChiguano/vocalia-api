@@ -1,7 +1,7 @@
 // match-player.repository.ts
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export const matchPlayerSelectFields = {
   match_player_id: true,

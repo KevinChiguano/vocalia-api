@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { actaService } from "./acta.service";
-import { ok, fail } from "../../utils/response";
+import { ok, fail } from "@/utils/response";
 
 export const actaController = {
   getByMatch: async (req: Request, res: Response) => {

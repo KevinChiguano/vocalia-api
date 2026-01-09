@@ -1,10 +1,11 @@
 // goal.service.ts
 import { goalRepository, goalSelectFields } from "./goal.repository";
 import { CreateGoalInput, UpdateGoalInput } from "./goal.schema";
-import { paginate } from "../../utils/pagination";
-import { convertToEcuadorTime } from "../../utils/convert.time";
-import type { PrismaTx } from "../../config/prisma.types";
-import { invalidateStatsByMatch } from "../../utils/cache.stats";
+import { paginate } from "@/utils/pagination";
+import { convertToEcuadorTime } from "@/utils/convert.time";
+import type { PrismaTx } from "@/config/prisma.types";
+import { invalidateStatsByMatch } from "@/utils/cache.stats";
+import { buildBooleanFilter } from "@/utils/filter.builder";
 
 const mapGoal = (g: any) => {
   if (!g) return null;
@@ -108,13 +109,18 @@ export class GoalService {
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
     const where: any = {};
 
-    if (filter.match_id !== undefined) where.match_id = BigInt(filter.match_id);
+    if (filter.matchId !== undefined) {
+      where.match_id = BigInt(filter.matchId);
+    }
 
-    if (filter.player_id !== undefined)
-      where.player_id = BigInt(filter.player_id);
+    if (filter.playerId !== undefined) {
+      where.player_id = BigInt(filter.playerId);
+    }
 
-    if (filter.is_own_goal !== undefined)
-      where.is_own_goal = filter.is_own_goal;
+    Object.assign(
+      where,
+      buildBooleanFilter("is_own_goal", filter.isOwnGoal)
+    );
 
     const result = await paginate(
       goalRepository,

@@ -1,8 +1,9 @@
 // match.controller.ts
 import { Request, Response } from "express";
 import { matchService } from "./match.service";
-import { ok, fail } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { ok, fail } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
+import { parseNumber, parseString, parseDate, parseEnum } from "@/utils/parseFilters";
 
 export const matchController = {
   create: async (req: Request, res: Response) => {
@@ -57,15 +58,13 @@ export const matchController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-
-    if (req.query.tournamentId)
-      filter.tournament_id = Number(req.query.tournamentId);
-
-    if (req.query.status) filter.status = req.query.status;
-
-    if (req.query.stage)
-      filter.stage = { contains: req.query.stage, mode: "insensitive" };
+    const filter = {
+      tournamentId: parseNumber(req.query.tournamentId, { min: 1 }),
+      status: parseEnum(req.query.status, ["programado", "en_curso", "finalizado", "suspendido", "cancelado"] as const),
+      stage: parseString(req.query.stage),
+      matchDateFrom: parseDate(req.query.matchDateFrom),
+      matchDateTo: parseDate(req.query.matchDateTo),
+    };
 
     try {
       const result = await matchService.list(page, limit, filter);

@@ -1,15 +1,20 @@
 // team.repository.ts
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
 export const teamSelectFields = {
   team_id: true,
   team_name: true,
   team_logo: true,
-  team_category: true,
   is_active: true,
   created_at: true,
+  category: {
+    select: {
+      name: true,
+      category_id: true,
+    },
+  },
 };
 
 export class TeamRepository {

@@ -1,10 +1,7 @@
-// match.repository.ts
-import prisma from "../../config/prisma";
-import type { Prisma } from "../../generated/prisma/client";
-import type { PrismaTx } from "../../config/prisma.types";
+import prisma from "@/config/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PrismaTx } from "@/config/prisma.types";
 
-// Los IDs de partidos se manejan como number en la capa de servicio/controlador,
-// pero se fuerzan a BigInt para la operación de Prisma si es necesario.
 type MatchId = number | bigint;
 
 export const matchSelectFields = {
@@ -58,7 +55,7 @@ export class MatchRepository {
   async findById(id: MatchId, tx?: PrismaTx) {
     const db = this.getClient(tx);
     return db.matches.findUnique({
-      where: { match_id: BigInt(id) }, // Manteniendo el casteo a BigInt
+      where: { match_id: BigInt(id) },
       select: matchSelectFields,
     });
   }
@@ -72,7 +69,7 @@ export class MatchRepository {
 
   async update(id: MatchId, data: Prisma.matchesUpdateInput, tx?: PrismaTx) {
     return this.getClient(tx).matches.update({
-      where: { match_id: BigInt(id) }, // Manteniendo el casteo a BigInt
+      where: { match_id: BigInt(id) },
       data,
       select: matchSelectFields,
     });
@@ -80,7 +77,7 @@ export class MatchRepository {
 
   async delete(id: MatchId, tx?: PrismaTx) {
     return this.getClient(tx).matches.delete({
-      where: { match_id: BigInt(id) }, // Manteniendo el casteo a BigInt
+      where: { match_id: BigInt(id) },
     });
   }
 

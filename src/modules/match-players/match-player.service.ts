@@ -2,7 +2,7 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { BulkCreateMatchPlayerInput } from "./match-player.schema";
 import { matchPlayerRepository } from "./match-player.repository";
-import prisma from "../../config/prisma";
+import prisma from "@/config/prisma";
 
 const mapMatchPlayerKeys = (mp: any) => {
   if (!mp) return null;

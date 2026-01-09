@@ -1,8 +1,8 @@
 // match-player.controller.ts
 import { Request, Response } from "express";
 import { matchPlayerService } from "./match-player.service";
-import { ok } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { ok } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
 
 export const matchPlayerController = {
   bulkCreate: async (req: Request, res: Response) => {

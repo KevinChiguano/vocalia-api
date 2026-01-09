@@ -1,9 +1,10 @@
 // tournament.controller.ts
 import { Request, Response } from "express";
 import { tournamentService } from "./tournament.service";
-import { ok, fail } from "../../utils/response";
+import { ok, fail } from "@/utils/response";
 // Importación asumida para un manejo consistente de errores
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
+import { parseBoolean, parseString, parseDate, parseNumber } from "@/utils/parseFilters";
 
 export const tournamentController = {
   create: async (req: Request, res: Response) => {
@@ -55,9 +56,14 @@ export const tournamentController = {
   list: async (req: Request, res: Response) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
-    const filter: any = {};
 
-    if (req.query.active) filter.is_active = req.query.active === "true";
+    const filter = {
+      league_id: parseNumber(req.query.leagueId, { min: 1 }),
+      is_active: parseBoolean(req.query.active),
+      search: parseString(req.query.search),
+      startFrom: parseDate(req.query.startFrom),
+      startTo: parseDate(req.query.startTo),
+    };
 
     try {
       // Cambio de nombre de método: getTournaments -> list

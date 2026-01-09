@@ -1,8 +1,9 @@
 // user.controller.ts
 import { Request, Response } from "express";
 import { userService } from "./user.service"; // Ahora es una instancia de la clase
-import { ok, fail } from "../../utils/response";
-import { handlePrismaError } from "../../utils/prismaErrorHandler"; // <-- ASUMIDO: Usar si existe
+import { ok, fail } from "@/utils/response";
+import { handlePrismaError } from "@/utils/prismaErrorHandler"; // <-- ASUMIDO: Usar si existe
+import { parseBoolean, parseString, parseNumber } from "@/utils/parseFilters";
 
 export const userController = {
   create: async (req: Request, res: Response) => {
@@ -59,8 +60,11 @@ export const userController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-    if (req.query.active) filter.is_active = req.query.active === "true";
+    const filter = {
+      is_active: parseBoolean(req.query.active),
+      search: parseString(req.query.search),
+      rolId: parseNumber(req.query.rolId, { min: 1 }),
+    };
 
     try {
       // Usamos .list en lugar de .getUsers
@@ -68,7 +72,9 @@ export const userController = {
       return res.json(ok(result));
     } catch (e: any) {
       // Ajustado para seguir el patrón de goal.controller.ts (aunque el error 500 es más general)
-      return fail("Error al obtener la lista de usuarios.");
+      return res
+        .status(500)
+        .json(fail("Error al obtener la lista de usuarios."));
     }
   },
 };

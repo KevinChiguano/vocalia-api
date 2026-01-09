@@ -1,11 +1,15 @@
 // match.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { CreateMatchInput, UpdateMatchInput } from "./match.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import { matchRepository, matchSelectFields } from "./match.repository"; // Importación clave
-import type { PrismaTx } from "../../config/prisma.types";
-import prisma from "../../config/prisma";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import type { PrismaTx } from "@/config/prisma.types";
+import prisma from "@/config/prisma";
+import { convertToEcuadorTime } from "@/utils/convert.time";
+import {
+  buildSearchFilter,
+  buildDateRangeFilter,
+} from "@/utils/filter.builder";
 
 const mapMatchKeys = (match: any) => {
   if (!match) return null;
@@ -127,7 +131,22 @@ export class MatchService {
    */
 
   async list(page: number, limit: number, filter: any = {}, tx?: PrismaTx) {
-    const where = filter;
+    const where: any = {};
+
+    if (filter.tournamentId !== undefined) {
+      where.tournament_id = filter.tournamentId;
+    }
+
+    if (filter.status !== undefined) {
+      where.status = filter.status;
+    }
+
+    Object.assign(
+      where,
+      buildSearchFilter(filter.stage, ["stage"]),
+      buildDateRangeFilter("match_date", filter.matchDateFrom, filter.matchDateTo)
+    );
+
     const result = await paginate(
       matchRepository,
       { page, limit },

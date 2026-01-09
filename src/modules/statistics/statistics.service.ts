@@ -1,6 +1,6 @@
-import prisma from "../../config/prisma";
+import prisma from "@/config/prisma";
 import { statisticsRepository } from "./statistics.repository";
-import { redis } from "../../config/redis";
+import { redis } from "@/config/redis";
 
 const CACHE_TTL = 60 * 5; // 5 minutos
 
@@ -168,6 +168,66 @@ export class StatisticsService {
         goals: g._count.player_id,
       };
     });
+  }
+  async dashboardStats(tournamentId: number) {
+    const cacheKey = `stats:dashboard:${tournamentId}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const data = await statisticsRepository.dashboardCounts(tournamentId);
+
+    const yellowCards =
+      data.sanctions.find((s) => s.type === "amarilla")?._count.type ?? 0;
+
+    const redCards = data.sanctions
+      .filter((s) => s.type !== "amarilla")
+      .reduce((sum, s) => sum + s._count.type, 0);
+
+    const response = {
+      counts: {
+        teams: data.teams,
+        players: data.players,
+        matches: data.matches,
+        goals: data.goals,
+        yellowCards,
+        redCards,
+      },
+    };
+
+    await redis.set(cacheKey, JSON.stringify(response), "EX", 300);
+    return response;
+  }
+
+  async globalDashboardStats() {
+    const cacheKey = "stats:dashboard:global";
+
+    const cached = await redis.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const data = await statisticsRepository.globalDashboardCounts();
+
+    const yellowCards =
+      data.sanctions.find((s) => s.type === "amarilla")?._count.type ?? 0;
+
+    const redCards = data.sanctions
+      .filter((s) => s.type === "roja_directa" || s.type === "doble_amarilla")
+      .reduce((sum, s) => sum + s._count.type, 0);
+
+    const response = {
+      counts: {
+        tournaments: data.tournaments,
+        teams: data.teams,
+        players: data.players,
+        matches: data.matches,
+        goals: data.goals,
+        yellowCards,
+        redCards,
+      },
+    };
+
+    await redis.set(cacheKey, JSON.stringify(response), "EX", CACHE_TTL);
+
+    return response;
   }
 }
 

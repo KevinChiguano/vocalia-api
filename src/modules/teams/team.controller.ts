@@ -1,9 +1,10 @@
 // team.controller.ts
 import { Request, Response } from "express";
 import { teamService } from "./team.service";
-import { ok, fail } from "../../utils/response";
+import { ok, fail } from "@/utils/response";
 // Asumimos handlePrismaError para mantener la consistencia
-import { handlePrismaError } from "../../utils/prismaErrorHandler";
+import { handlePrismaError } from "@/utils/prismaErrorHandler";
+import { parseBoolean, parseString } from "@/utils/parseFilters";
 
 export const teamController = {
   create: async (req: Request, res: Response) => {
@@ -51,9 +52,11 @@ export const teamController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-
-    if (req.query.active) filter.is_active = req.query.active === "true";
+    const filter = {
+      is_active: parseBoolean(req.query.active),
+      search: parseString(req.query.search),
+      category: parseString(req.query.category),
+    };
 
     try {
       // Cambio de nombre de método: getTeams -> list

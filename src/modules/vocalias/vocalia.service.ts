@@ -1,10 +1,10 @@
 import type { CreateVocaliaInput, UpdateVocaliaInput } from "./vocalia.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import { vocaliaRepository, vocaliaSelectFields } from "./vocalia.repository";
-import { convertToEcuadorTime } from "../../utils/convert.time";
-import type { PrismaTx } from "../../config/prisma.types";
-import prisma from "../../config/prisma";
-import { invalidateTournamentStats } from "../../utils/cache.stats";
+import { convertToEcuadorTime } from "@/utils/convert.time";
+import type { PrismaTx } from "@/config/prisma.types";
+import prisma from "@/config/prisma";
+import { invalidateTournamentStats } from "@/utils/cache.stats";
 
 const mapVocaliaKeys = (v: any) => {
   if (!v) return null;

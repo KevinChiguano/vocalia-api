@@ -1,9 +1,11 @@
 // sanction.controller.ts
 import { Request, Response } from "express";
 import { sanctionService } from "./sanction.service";
-import { ok, fail } from "../../utils/response";
+import { ok, fail } from "@/utils/response";
 import { CreateSanctionInput } from "./sanction.schema";
-import { handlePrismaError } from "../../utils/prismaErrorHandler"; // Asumido para consistencia
+import { handlePrismaError } from "@/utils/prismaErrorHandler"; // Asumido para consistencia
+import { parseNumber, parseString, parseEnum } from "@/utils/parseFilters";
+import { SanctionTypeEnum } from "./sanction.schema";
 
 export const sanctionController = {
   create: async (req: Request, res: Response) => {
@@ -91,17 +93,11 @@ export const sanctionController = {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
-    const filter: any = {};
-
-    if (req.query.matchId) {
-      filter.match_id = Number(req.query.matchId);
-    }
-    if (req.query.playerId) {
-      filter.player_id = Number(req.query.playerId);
-    }
-    if (req.query.type) {
-      filter.type = String(req.query.type);
-    }
+    const filter = {
+      matchId: parseNumber(req.query.matchId, { min: 1 }),
+      playerId: parseNumber(req.query.playerId, { min: 1 }),
+      type: parseEnum(req.query.type, ["amarilla", "roja_directa", "doble_amarilla"] as const),
+    };
 
     try {
       // Cambio de nombre de método: getSanctions -> list

@@ -1,17 +1,17 @@
 // substitution.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { convertToEcuadorTime } from "../../utils/convert.time";
+import { convertToEcuadorTime } from "@/utils/convert.time";
 import {
   CreateSubstitutionInput,
   UpdateSubstitutionInput,
 } from "./substitution.schema";
-import { paginate } from "../../utils/pagination";
+import { paginate } from "@/utils/pagination";
 import {
   substitutionRepository,
   substitutionSelectFields,
 } from "./substitution.repository";
-import type { PrismaTx } from "../../config/prisma.types";
-import { invalidateStatsByMatch } from "../../utils/cache.stats";
+import type { PrismaTx } from "@/config/prisma.types";
+import { invalidateStatsByMatch } from "@/utils/cache.stats";
 
 const mapSubstitutionKeys = (substitution: any) => {
   if (!substitution) return null;
@@ -135,7 +135,20 @@ export class SubstitutionService {
   }
 
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
-    const where = filter; // @ts-ignore
+    const where: any = {};
+
+    if (filter.matchId !== undefined) {
+      where.match_id = filter.matchId;
+    }
+
+    if (filter.playerOut !== undefined) {
+      where.player_out = filter.playerOut;
+    }
+
+    if (filter.playerIn !== undefined) {
+      where.player_in = filter.playerIn;
+    }
+
     const result = await paginate(
       substitutionRepository, // Usamos el Repository
       { page, limit },

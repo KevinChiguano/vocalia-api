@@ -4,8 +4,8 @@ import type {
   UpdateTournamentTeamInput,
 } from "./tournament-team.schema";
 import { tournamentTeamRepository } from "./tournament-team.repository";
-import { convertToEcuadorTime } from "../../utils/convert.time";
-import type { PrismaTx } from "../../config/prisma.types";
+import { convertToEcuadorTime } from "@/utils/convert.time";
+import type { PrismaTx } from "@/config/prisma.types";
 
 const mapTournamentTeamKeys = (tt: any) => {
   if (!tt) return null;
@@ -17,6 +17,12 @@ const mapTournamentTeamKeys = (tt: any) => {
       ? {
           id: tt.team.team_id,
           name: tt.team.team_name,
+        }
+      : null,
+    category: tt.category
+      ? {
+          id: tt.category.category_id,
+          name: tt.category.name,
         }
       : null,
     played: tt.played,
@@ -39,6 +45,7 @@ export class TournamentTeamService {
         {
           tournament_id: BigInt(data.tournamentId),
           team_id: BigInt(data.teamId),
+          category_id: data.categoryId ? BigInt(data.categoryId) : undefined,
         },
         tx
       );
