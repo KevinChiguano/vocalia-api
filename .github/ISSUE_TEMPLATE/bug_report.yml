@@ -1,0 +1,47 @@
+name: Bug Report
+description: Reporta un error o comportamiento inesperado.
+title: "bug: [título descriptivo]"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar este error. Por favor, completa la información a continuación para ayudarnos a resolverlo.
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del Bug
+      description: Explica qué está pasando de forma clara y concisa.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Pasos para Reproducir
+      description: ¿Cómo podemos reproducir este comportamiento?
+      placeholder: |
+        1. Ir a '...'
+        2. Click en '....'
+        3. El error aparece en '....'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento Esperado
+      description: ¿Qué debería haber pasado?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno
+      description: Información sobre tu sistema (Versión de Node, OS, etc).
+      placeholder: |
+        - Node version: 18.x
+        - OS: Windows 11
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Capturas de pantalla
+      description: Si tienes errores en consola o capturas, pégalas aquí.

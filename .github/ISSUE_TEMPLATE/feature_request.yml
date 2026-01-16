@@ -1,0 +1,33 @@
+name: Feature Request
+description: Sugiere una nueva funcionalidad o mejora.
+title: "feat: [título de la funcionalidad]"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Tus ideas son bienvenidas! Por favor, describe la funcionalidad que te gustaría ver en Vocalia API.
+  - type: textarea
+    id: problem
+    attributes:
+      label: ¿Qué problema resuelve esta funcionalidad?
+      description: Describe el problema o la necesidad que motiva esta sugerencia.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Descripción de la Solución
+      description: Explica cómo te imaginas que debería funcionar.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      description: ¿Has pensado en alguna otra forma de resolverlo?
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto adicional
+      description: Añade cualquier otra información, capturas o diagramas que ayuden a entender la propuesta.
