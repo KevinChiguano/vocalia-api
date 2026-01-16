@@ -104,6 +104,7 @@ model players {
   player_number   Int?
   player_dni      String    @unique
   card_image_url  String?
+  image_url       String?
   birth_date      DateTime? @db.Date
   team_id         BigInt
   created_at      DateTime  @default(now()) @db.Timestamptz(6)
@@ -193,7 +194,7 @@ model substitutions {
 
 model teams {
   team_id    BigInt   @id @default(autoincrement())
-  team_name  String   @unique
+  team_name  String
   team_logo  String?
   is_active  Boolean  @default(true)
   created_at DateTime @default(now()) @db.Timestamptz(6)
@@ -208,6 +209,7 @@ model teams {
   category    categories? @relation(fields: [category_id], references: [category_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_teams_category")
   category_id BigInt?
 
+  @@unique([team_name, category_id], name: "uq_team_name_category")
   @@index([category_id], map: "idx_teams_category")
 }
 

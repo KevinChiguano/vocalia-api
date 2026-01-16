@@ -20,6 +20,7 @@ const mapTeamKeys = (team: any) => {
           name: team.category.name,
         }
       : null,
+    categoryId: team.category?.category_id || null,
     isActive: team.is_active,
     createdAt: convertToEcuadorTime(team.created_at),
   };
@@ -90,8 +91,8 @@ export class TeamService {
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
     const where: any = {};
 
-    if (filter.category !== undefined) {
-      where.team_category = filter.category;
+    if (filter.category) {
+      where.category_id = filter.category;
     }
 
     Object.assign(

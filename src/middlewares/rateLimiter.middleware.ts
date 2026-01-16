@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from "express";
 // Permite 100 peticiones en 15 minutos por IP.
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Limita cada IP a 100 peticiones por `windowMs`
+  max: 1000, // Limita cada IP a 100 peticiones por `windowMs`
   standardHeaders: "draft-7", // Draft 7 de los headers del RateLimit
   legacyHeaders: false, // Deshabilita los headers X-RateLimit-*
   message: (req: Request, res: Response) => {

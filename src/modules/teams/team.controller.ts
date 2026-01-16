@@ -4,7 +4,7 @@ import { teamService } from "./team.service";
 import { ok, fail } from "@/utils/response";
 // Asumimos handlePrismaError para mantener la consistencia
 import { handlePrismaError } from "@/utils/prismaErrorHandler";
-import { parseBoolean, parseString } from "@/utils/parseFilters";
+import { parseBoolean, parseString, parseNumber } from "@/utils/parseFilters";
 
 export const teamController = {
   create: async (req: Request, res: Response) => {
@@ -55,7 +55,7 @@ export const teamController = {
     const filter = {
       is_active: parseBoolean(req.query.active),
       search: parseString(req.query.search),
-      category: parseString(req.query.category),
+      category: parseNumber(req.query.category),
     };
 
     try {

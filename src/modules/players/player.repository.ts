@@ -10,12 +10,14 @@ export const playerSelectFields = {
   player_number: true,
   player_dni: true,
   card_image_url: true,
+  image_url: true,
   birth_date: true,
   team_id: true,
   team: {
     select: {
       team_id: true,
       team_name: true,
+      team_logo: true,
     },
   },
   category: {

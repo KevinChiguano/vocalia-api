@@ -17,6 +17,7 @@ export function parseNumber(
   value: any,
   options?: { min?: number; max?: number }
 ): number | undefined {
+  if (value === "" || value === null || value === undefined) return undefined;
   const n = Number(value);
   if (isNaN(n)) return undefined;
 

@@ -17,6 +17,7 @@ const mapTournamentTeamKeys = (tt: any) => {
       ? {
           id: tt.team.team_id,
           name: tt.team.team_name,
+          logo: tt.team.team_logo,
         }
       : null,
     category: tt.category

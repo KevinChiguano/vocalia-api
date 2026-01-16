@@ -5,10 +5,7 @@ import type { CreatePlayerInput, UpdatePlayerInput } from "./player.schema";
 import { paginate } from "@/utils/pagination";
 import { playerRepository, playerSelectFields } from "./player.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
-import {
-  buildSearchFilter,
-  buildBooleanFilter,
-} from "@/utils/filter.builder";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 
 const mapPlayerKeys = (player: any) => {
   if (!player) return null;
@@ -19,11 +16,15 @@ const mapPlayerKeys = (player: any) => {
     number: player.player_number,
     dni: player.player_dni,
     cardUrl: player.card_image_url,
-    birthDate: player.birth_date ? player.birth_date.toISOString().split('T')[0] : null,
+    imageUrl: player.image_url,
+    birthDate: player.birth_date
+      ? player.birth_date.toISOString().split("T")[0]
+      : null,
     team: player.team
       ? {
           id: player.team.team_id,
           name: player.team.team_name,
+          logo: player.team.team_logo,
         }
       : null,
     category: player.category
@@ -47,6 +48,7 @@ export class PlayerService {
         player_number: data.number,
         player_dni: data.dni,
         card_image_url: data.cardUrl,
+        image_url: data.imageUrl,
         birth_date: data.birthDate ? new Date(data.birthDate) : undefined,
         team_id: data.teamId,
         category_id: data.categoryId,
@@ -66,6 +68,7 @@ export class PlayerService {
     if (data.number) updateData.player_number = data.number;
     if (data.dni) updateData.player_dni = data.dni;
     if (data.cardUrl) updateData.card_image_url = data.cardUrl;
+    if (data.imageUrl) updateData.image_url = data.imageUrl;
     if (data.birthDate) updateData.birth_date = new Date(data.birthDate);
     if (data.teamId) updateData.team_id = data.teamId;
     if (data.categoryId) updateData.category_id = data.categoryId;
@@ -119,10 +122,18 @@ export class PlayerService {
       where.team_id = filter.teamId;
     }
 
+    if (filter.categoryId !== undefined) {
+      where.category_id = filter.categoryId;
+    }
+
     Object.assign(
       where,
       buildBooleanFilter("is_active", filter.is_active),
-      buildSearchFilter(filter.search, ["player_name", "player_lastname", "player_dni"])
+      buildSearchFilter(filter.search, [
+        "player_name",
+        "player_lastname",
+        "player_dni",
+      ])
     );
 
     const result = await paginate(

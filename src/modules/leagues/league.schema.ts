@@ -6,7 +6,11 @@ const leagueBase = {
     .min(3, "El nombre debe tener al menos 3 caracteres.")
     .max(100, "El nombre no puede superar los 100 caracteres."),
 
-  imageUrl: z.string().url("La URL de la imagen debe ser válida.").optional(),
+  imageUrl: z
+    .string()
+    .url("La URL de la imagen debe ser válida.")
+    .or(z.literal(""))
+    .optional(),
 
   isActive: z.boolean().optional(),
 };

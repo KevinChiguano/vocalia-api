@@ -1,14 +1,13 @@
-
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { convertToEcuadorTime } from "@/utils/convert.time";
 import { createCategorySchema, updateCategorySchema } from "./category.schema";
 import { paginate } from "@/utils/pagination";
-import { categoryRepository, categorySelectFields } from "./category.repository";
-import type { PrismaTx } from "@/config/prisma.types";
 import {
-  buildSearchFilter,
-  buildBooleanFilter,
-} from "@/utils/filter.builder";
+  categoryRepository,
+  categorySelectFields,
+} from "./category.repository";
+import type { PrismaTx } from "@/config/prisma.types";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 import { z } from "zod";
 
 type CreateCategoryInput = z.infer<typeof createCategorySchema>;
@@ -23,7 +22,9 @@ const mapCategoryKeys = (category: any) => {
     description: category.description,
     isActive: category.is_active,
     createdAt: convertToEcuadorTime(category.created_at),
-    updatedAt: category.updated_at ? convertToEcuadorTime(category.updated_at) : null,
+    updatedAt: category.updated_at
+      ? convertToEcuadorTime(category.updated_at)
+      : null,
   };
 };
 
@@ -33,7 +34,7 @@ export class CategoryService {
       {
         name: data.name,
         description: data.description,
-        is_active: data.is_active ?? true,
+        is_active: data.isActive ?? true,
       },
       tx
     );
@@ -45,16 +46,21 @@ export class CategoryService {
     const updateData: any = {};
 
     if (data.name) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (typeof data.is_active === "boolean")
-      updateData.is_active = data.is_active;
+    if (data.description !== undefined)
+      updateData.description = data.description;
+    if (typeof data.isActive === "boolean")
+      updateData.is_active = data.isActive;
 
     if (Object.keys(updateData).length === 0) {
       throw new Error("No hay datos válidos para actualizar.");
     }
 
     try {
-      const updatedCategory = await categoryRepository.update(id, updateData, tx);
+      const updatedCategory = await categoryRepository.update(
+        id,
+        updateData,
+        tx
+      );
       return mapCategoryKeys(updatedCategory);
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {

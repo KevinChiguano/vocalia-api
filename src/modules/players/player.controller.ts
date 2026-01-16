@@ -62,6 +62,7 @@ export const playerController = {
       is_active: parseBoolean(req.query.active),
       search: parseString(req.query.search),
       teamId: parseNumber(req.query.teamId, { min: 1 }),
+      categoryId: parseNumber(req.query.categoryId, { min: 1 }),
     };
 
     try {

@@ -10,9 +10,10 @@ const teamBase = {
     .string()
     .url("El logo debe ser una URL válida.")
     .max(255, "La URL del logo no puede superar los 255 caracteres.")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
 
-  categoryId: z.number().int().positive().optional(),
+  categoryId: z.coerce.number().int().positive().optional(),
 
   isActive: z.boolean().optional(),
 };

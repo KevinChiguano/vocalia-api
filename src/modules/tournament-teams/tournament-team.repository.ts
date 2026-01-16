@@ -20,6 +20,7 @@ export const tournamentTeamSelectFields = {
     select: {
       team_id: true,
       team_name: true,
+      team_logo: true,
     },
   },
   category_id: true,
