@@ -70,13 +70,13 @@ export const ModelName = {
     categories: 'categories',
     goals: 'goals',
     matches: 'matches',
+    fields: 'fields',
     players: 'players',
     roles: 'roles',
     users: 'users',
     sanctions: 'sanctions',
     substitutions: 'substitutions',
     teams: 'teams',
-    leagues: 'leagues',
     tournaments: 'tournaments',
     vocalias: 'vocalias',
     match_players: 'match_players',
@@ -111,16 +111,24 @@ export const MatchesScalarFieldEnum = {
     tournament_id: 'tournament_id',
     local_team_id: 'local_team_id',
     away_team_id: 'away_team_id',
+    field_id: 'field_id',
     category: 'category',
     stage: 'stage',
     match_day: 'match_day',
     match_date: 'match_date',
-    location: 'location',
     status: 'status',
     local_score: 'local_score',
     away_score: 'away_score',
     video_url: 'video_url',
     created_at: 'created_at'
+};
+export const FieldsScalarFieldEnum = {
+    field_id: 'field_id',
+    name: 'name',
+    location: 'location',
+    is_active: 'is_active',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
 };
 export const PlayersScalarFieldEnum = {
     player_id: 'player_id',
@@ -129,7 +137,7 @@ export const PlayersScalarFieldEnum = {
     player_number: 'player_number',
     player_dni: 'player_dni',
     card_image_url: 'card_image_url',
-    image_url: 'image_url',
+    player_image_url: 'player_image_url',
     birth_date: 'birth_date',
     team_id: 'team_id',
     created_at: 'created_at',
@@ -172,17 +180,8 @@ export const TeamsScalarFieldEnum = {
     created_at: 'created_at',
     category_id: 'category_id'
 };
-export const LeaguesScalarFieldEnum = {
-    league_id: 'league_id',
-    name: 'name',
-    image_url: 'image_url',
-    is_active: 'is_active',
-    created_at: 'created_at',
-    updated_at: 'updated_at'
-};
 export const TournamentsScalarFieldEnum = {
     tournament_id: 'tournament_id',
-    league_id: 'league_id',
     name: 'name',
     start_date: 'start_date',
     end_date: 'end_date',

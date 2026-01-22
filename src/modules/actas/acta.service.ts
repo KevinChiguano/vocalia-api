@@ -18,6 +18,7 @@ export class ActaService {
       include: {
         localTeam: { select: { team_id: true, team_name: true } },
         awayTeam: { select: { team_id: true, team_name: true } },
+        field: { select: { name: true } }, // Include field name
         vocalias: {
           include: {
             vocalUser: {
@@ -58,10 +59,10 @@ export class ActaService {
     });
 
     const localPlayers = matchPlayers.filter(
-      (p) => p.team.team_id === match.local_team_id
+      (p) => p.team.team_id === match.local_team_id,
     );
     const awayPlayers = matchPlayers.filter(
-      (p) => p.team.team_id === match.away_team_id
+      (p) => p.team.team_id === match.away_team_id,
     );
 
     /**
@@ -102,7 +103,7 @@ export class ActaService {
         date: match.match_date ? convertToEcuadorTime(match.match_date) : null,
         category: match.category,
         stage: match.stage,
-        location: match.location,
+        location: match.field?.name ?? "No definido", // Use field name or default
         score: {
           local: match.local_score,
           away: match.away_score,

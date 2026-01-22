@@ -2,7 +2,7 @@ import { tournamentService } from "./tournament.service";
 import { ok, fail } from "@/utils/response";
 // Importación asumida para un manejo consistente de errores
 import { handlePrismaError } from "@/utils/prismaErrorHandler";
-import { parseBoolean, parseString, parseDate, parseNumber } from "@/utils/parseFilters";
+import { parseBoolean, parseString, parseDate, } from "@/utils/parseFilters";
 export const tournamentController = {
     create: async (req, res) => {
         try {
@@ -55,7 +55,6 @@ export const tournamentController = {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const filter = {
-            league_id: parseNumber(req.query.leagueId, { min: 1 }),
             is_active: parseBoolean(req.query.active),
             search: parseString(req.query.search),
             startFrom: parseDate(req.query.startFrom),

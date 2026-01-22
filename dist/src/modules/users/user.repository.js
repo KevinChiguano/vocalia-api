@@ -58,5 +58,13 @@ export class UserRepository {
     async count(params, tx) {
         return this.getClient(tx).users.count(params);
     }
+    async getRoles(tx) {
+        return this.getClient(tx).roles.findMany({
+            select: {
+                rol_id: true,
+                rol_name: true,
+            },
+        });
+    }
 }
 export const userRepository = new UserRepository();

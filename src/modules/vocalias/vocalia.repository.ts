@@ -17,6 +17,37 @@ export const vocaliaSelectFields = {
       status: true,
       local_score: true,
       away_score: true,
+      match_date: true,
+      match_day: true,
+      stage: true,
+      category: true,
+      localTeam: {
+        select: {
+          team_id: true,
+          team_name: true,
+          team_logo: true,
+        },
+      },
+      awayTeam: {
+        select: {
+          team_id: true,
+          team_name: true,
+          team_logo: true,
+        },
+      },
+      field: {
+        select: {
+          field_id: true,
+          name: true,
+          location: true,
+        },
+      },
+      tournament: {
+        select: {
+          tournament_id: true,
+          name: true,
+        },
+      },
     },
   },
 };
@@ -36,7 +67,7 @@ export class VocaliaRepository {
   async findByMatchAndVocal(
     matchId: number,
     vocalUserId: number,
-    tx?: PrismaTx
+    tx?: PrismaTx,
   ) {
     return this.getClient(tx).vocalias.findFirst({
       where: {
@@ -64,7 +95,7 @@ export class VocaliaRepository {
   async update(
     matchId: number,
     data: Prisma.vocaliasUpdateInput,
-    tx?: PrismaTx
+    tx?: PrismaTx,
   ) {
     return this.getClient(tx).vocalias.update({
       where: { match_id: BigInt(matchId) },

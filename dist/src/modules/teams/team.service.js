@@ -18,6 +18,7 @@ const mapTeamKeys = (team) => {
             }
             : null,
         isActive: team.is_active,
+        categoryId: team.category_id ? Number(team.category_id) : undefined,
         createdAt: convertToEcuadorTime(team.created_at),
     };
 };
@@ -75,7 +76,7 @@ export class TeamService {
     async list(page, limit, filter, tx) {
         const where = {};
         if (filter.category !== undefined) {
-            where.team_category = filter.category;
+            where.category_id = Number(filter.category);
         }
         Object.assign(where, buildBooleanFilter("is_active", filter.is_active), buildSearchFilter(filter.search, ["team_name"]));
         const result = await paginate(teamRepository, // Pasamos el Repository al paginador

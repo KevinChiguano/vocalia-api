@@ -1,0 +1,32 @@
+import { Router } from "express";
+import { fieldController } from "./field.controller";
+import { authMiddleware } from "@/middlewares/auth.middleware";
+import { roleGuard } from "@/middlewares/role.guard";
+import { validateSchema } from "@/middlewares/validateSchema";
+import { createFieldSchema, updateFieldSchema } from "./field.schema";
+
+const router = Router();
+
+router.use(authMiddleware.verifyToken);
+
+router.post(
+  "/",
+  roleGuard(["ADMIN"]),
+  validateSchema(createFieldSchema),
+  fieldController.create,
+);
+
+router.put(
+  "/:id",
+  roleGuard(["ADMIN"]),
+  validateSchema(updateFieldSchema),
+  fieldController.update,
+);
+
+router.delete("/:id", roleGuard(["ADMIN"]), fieldController.delete);
+
+router.get("/", fieldController.list);
+
+router.get("/:id", fieldController.getById);
+
+export default router;

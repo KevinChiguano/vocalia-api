@@ -1,7 +1,7 @@
 // tournament.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { tournamentRepository, tournamentSelectFields, } from "./tournament.repository"; // Importación clave
-import { convertToEcuadorTime, formatDateToISO, } from "@/utils/convert.time";
+import { convertToEcuadorTime, formatDateToISO } from "@/utils/convert.time";
 import { paginate } from "@/utils/pagination";
 import { buildSearchFilter, buildDateRangeFilter, buildBooleanFilter, } from "@/utils/filter.builder";
 const mapTournamentKeys = (tournament) => {
@@ -9,7 +9,6 @@ const mapTournamentKeys = (tournament) => {
         return null;
     return {
         id: tournament.tournament_id,
-        leagueId: tournament.league_id,
         name: tournament.name,
         startDate: formatDateToISO(tournament.start_date),
         endDate: formatDateToISO(tournament.end_date),
@@ -19,13 +18,12 @@ const mapTournamentKeys = (tournament) => {
 };
 export class TournamentService {
     async create(data, tx) {
-        const { leagueId, name, startDate, endDate, isActive } = data;
+        const { name, startDate, endDate, isActive } = data;
         const startDateObject = startDate ? new Date(startDate) : undefined;
         const endDateObject = endDate ? new Date(endDate) : undefined;
         const newTournament = await tournamentRepository.create(
         // Uso del Repository
         {
-            league_id: leagueId,
             name,
             start_date: startDateObject,
             end_date: endDateObject,
@@ -35,8 +33,6 @@ export class TournamentService {
     }
     async update(id, data, tx) {
         const updateData = {};
-        if (data.leagueId !== undefined)
-            updateData.league_id = data.leagueId;
         if (data.name !== undefined)
             updateData.name = data.name;
         if (data.startDate)
@@ -79,9 +75,6 @@ export class TournamentService {
     }
     async list(page, limit, filter, tx) {
         const where = {};
-        if (filter.league_id) {
-            where.league_id = filter.league_id;
-        }
         Object.assign(where, buildBooleanFilter("is_active", filter.is_active), buildSearchFilter(filter.search, ["name"]), buildDateRangeFilter("start_date", filter.startFrom, filter.startTo));
         const result = await paginate(tournamentRepository, // Pasamos el Repository al paginador
         { page, limit }, {

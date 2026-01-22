@@ -38,9 +38,9 @@ router.use(authMiddleware.verifyToken);
 router.post(
   "/",
   strictLimiter,
-  roleGuard(["ADMIN"]),
+  roleGuard(["ADMIN", "VOCAL"]),
   validateSchema(createGoalSchema),
-  goalController.create
+  goalController.create,
 );
 
 /**
@@ -75,7 +75,7 @@ router.post(
   strictLimiter,
   roleGuard(["ADMIN"]),
   validateSchema(createGoalsBulkSchema),
-  goalController.bulkCreate
+  goalController.bulkCreate,
 );
 
 /**
@@ -108,9 +108,9 @@ router.post(
  */
 router.put(
   "/:id",
-  roleGuard(["ADMIN"]),
+  roleGuard(["ADMIN", "VOCAL"]),
   validateSchema(updateGoalSchema),
-  goalController.update
+  goalController.update,
 );
 
 /**
@@ -131,7 +131,7 @@ router.put(
  *       200:
  *         description: Gol eliminado
  */
-router.delete("/:id", roleGuard(["ADMIN"]), goalController.delete);
+router.delete("/:id", roleGuard(["ADMIN", "VOCAL"]), goalController.delete);
 
 /**
  * @openapi

@@ -16,11 +16,6 @@ const dateSchema = z
   .optional();
 
 const tournamentBase = {
-  leagueId: z
-    .number()
-    .int()
-    .positive("El ID de la liga debe ser un número positivo."),
-
   name: z
     .string()
     .min(5, "El nombre debe tener al menos 5 caracteres.")
@@ -49,7 +44,7 @@ const refinedSchema = baseSchema.refine(
     message:
       "La fecha de finalización no puede ser menor que la fecha de inicio.",
     path: ["endDate"],
-  }
+  },
 );
 
 export const createTournamentSchema = refinedSchema;

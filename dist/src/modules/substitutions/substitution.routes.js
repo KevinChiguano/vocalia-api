@@ -32,7 +32,7 @@ router.use(authMiddleware.verifyToken);
  *             schema:
  *               $ref: '#/components/schemas/SubstitutionResponse'
  */
-router.post("/", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createSubstitutionSchema), substitutionController.create);
+router.post("/", strictLimiter, roleGuard(["ADMIN", "VOCAL"]), validateSchema(createSubstitutionSchema), substitutionController.create);
 /**
  * @openapi
  * /substitutions/bulk:
@@ -84,7 +84,7 @@ router.post("/bulk", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createS
  *             schema:
  *               $ref: '#/components/schemas/SubstitutionResponse'
  */
-router.put("/:id", roleGuard(["ADMIN"]), validateSchema(updateSubstitutionSchema), substitutionController.update);
+router.put("/:id", roleGuard(["ADMIN", "VOCAL"]), validateSchema(updateSubstitutionSchema), substitutionController.update);
 /**
  * @openapi
  * /substitutions/{id}:
@@ -107,7 +107,7 @@ router.put("/:id", roleGuard(["ADMIN"]), validateSchema(updateSubstitutionSchema
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.delete("/:id", roleGuard(["ADMIN"]), substitutionController.delete);
+router.delete("/:id", roleGuard(["ADMIN", "VOCAL"]), substitutionController.delete);
 /**
  * @openapi
  * /substitutions:

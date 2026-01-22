@@ -1,12 +1,57 @@
 import { Router } from "express";
 import { matchController } from "./match.controller";
+import { programmingSheetController } from "./programming-sheet.controller";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 import { roleGuard } from "@/middlewares/role.guard";
 import { validateSchema } from "@/middlewares/validateSchema";
-import { createMatchSchema, updateMatchSchema } from "./match.schema";
+import { createMatchSchema, updateMatchSchema, programmingSheetSchema, } from "./match.schema";
 import { strictLimiter } from "@/middlewares/rateLimiter.middleware";
 const router = Router();
 router.use(authMiddleware.verifyToken);
+/**
+ * @openapi
+ * /matches/programming-sheet:
+ *   post:
+ *     tags: [Matches]
+ *     summary: Guardar hoja de programación (creación masiva de partidos y vocalías)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tournamentId:
+ *                 type: number
+ *               stage:
+ *                 type: string
+ *               matchDay:
+ *                 type: number
+ *               rows:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     matchDate:
+ *                       type: string
+ *                       format: date-time
+ *                     time:
+ *                       type: string
+ *                     localTeamId:
+ *                       type: number
+ *                     awayTeamId:
+ *                       type: number
+ *                     categoryId:
+ *                       type: number
+ *                     vocalUserId:
+ *                       type: number
+ *     responses:
+ *       201:
+ *         description: Hoja de programación guardada correctamente
+ */
+router.post("/programming-sheet", roleGuard(["ADMIN"]), validateSchema(programmingSheetSchema), programmingSheetController.save);
 /**
  * @openapi
  * /matches:
@@ -59,6 +104,22 @@ router.post("/", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createMatch
  *               $ref: '#/components/schemas/MatchResponse'
  */
 router.put("/:id", roleGuard(["ADMIN"]), validateSchema(updateMatchSchema), matchController.update);
+/**
+ * @openapi
+ * /matches/{id}/status:
+ *   put:
+ *     tags: [Matches]
+ *     summary: Actualizar estado de partido
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ */
+router.put("/:id/status", matchController.updateStatus);
 /**
  * @openapi
  * /matches/{id}:

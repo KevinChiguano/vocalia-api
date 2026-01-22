@@ -9,10 +9,7 @@ import {
   tournamentSelectFields,
 } from "./tournament.repository"; // Importación clave
 
-import {
-  convertToEcuadorTime,
-  formatDateToISO,
-} from "@/utils/convert.time";
+import { convertToEcuadorTime, formatDateToISO } from "@/utils/convert.time";
 
 import { paginate } from "@/utils/pagination";
 import type { PrismaTx } from "@/config/prisma.types";
@@ -28,7 +25,6 @@ const mapTournamentKeys = (tournament: any) => {
 
   return {
     id: tournament.tournament_id,
-    leagueId: tournament.league_id,
     name: tournament.name,
     startDate: formatDateToISO(tournament.start_date),
     endDate: formatDateToISO(tournament.end_date),
@@ -39,7 +35,7 @@ const mapTournamentKeys = (tournament: any) => {
 
 export class TournamentService {
   async create(data: CreateTournamentInput, tx?: PrismaTx) {
-    const { leagueId, name, startDate, endDate, isActive } = data;
+    const { name, startDate, endDate, isActive } = data;
 
     const startDateObject = startDate ? new Date(startDate) : undefined;
     const endDateObject = endDate ? new Date(endDate) : undefined;
@@ -47,13 +43,12 @@ export class TournamentService {
     const newTournament = await tournamentRepository.create(
       // Uso del Repository
       {
-        league_id: leagueId,
         name,
         start_date: startDateObject,
         end_date: endDateObject,
         is_active: isActive ?? true,
       },
-      tx
+      tx,
     );
 
     return mapTournamentKeys(newTournament);
@@ -62,7 +57,6 @@ export class TournamentService {
   async update(id: number, data: UpdateTournamentInput, tx?: PrismaTx) {
     const updateData: any = {};
 
-    if (data.leagueId !== undefined) updateData.league_id = data.leagueId;
     if (data.name !== undefined) updateData.name = data.name;
     if (data.startDate) updateData.start_date = new Date(data.startDate);
     if (data.endDate) updateData.end_date = new Date(data.endDate);
@@ -78,7 +72,7 @@ export class TournamentService {
         // Uso del Repository
         id,
         updateData,
-        tx
+        tx,
       );
       return mapTournamentKeys(updatedTournament);
     } catch (e) {
@@ -96,7 +90,7 @@ export class TournamentService {
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
         throw new Error(
-          `El torneo con ID ${id} no fue encontrado para borrar.`
+          `El torneo con ID ${id} no fue encontrado para borrar.`,
         );
       }
       throw e;
@@ -112,15 +106,11 @@ export class TournamentService {
   async list(page: number, limit: number, filter: any, tx?: PrismaTx) {
     const where: any = {};
 
-    if (filter.league_id) {
-      where.league_id = filter.league_id;
-    }
-
     Object.assign(
       where,
       buildBooleanFilter("is_active", filter.is_active),
       buildSearchFilter(filter.search, ["name"]),
-      buildDateRangeFilter("start_date", filter.startFrom, filter.startTo)
+      buildDateRangeFilter("start_date", filter.startFrom, filter.startTo),
     );
 
     const result = await paginate(
@@ -131,7 +121,7 @@ export class TournamentService {
         select: tournamentSelectFields,
         orderBy: { tournament_id: "desc" },
       },
-      tx
+      tx,
     );
 
     return {

@@ -3,7 +3,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { convertToEcuadorTime } from "@/utils/convert.time";
 import { paginate } from "@/utils/pagination";
 import { playerRepository, playerSelectFields } from "./player.repository"; // Importación clave
-import { buildSearchFilter, buildBooleanFilter, } from "@/utils/filter.builder";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 const mapPlayerKeys = (player) => {
     if (!player)
         return null;
@@ -14,7 +14,10 @@ const mapPlayerKeys = (player) => {
         number: player.player_number,
         dni: player.player_dni,
         cardUrl: player.card_image_url,
-        birthDate: player.birth_date ? player.birth_date.toISOString().split('T')[0] : null,
+        imageUrl: player.player_image_url,
+        birthDate: player.birth_date
+            ? player.birth_date.toISOString().split("T")[0]
+            : null,
         team: player.team
             ? {
                 id: player.team.team_id,
@@ -41,12 +44,29 @@ export class PlayerService {
             player_number: data.number,
             player_dni: data.dni,
             card_image_url: data.cardUrl,
+            player_image_url: data.imageUrl,
             birth_date: data.birthDate ? new Date(data.birthDate) : undefined,
             team_id: data.teamId,
             category_id: data.categoryId,
             is_active: data.isActive ?? true,
         }, tx);
         return mapPlayerKeys(newPlayer);
+    }
+    async createMany(data, tx) {
+        const playersData = data.map((player) => ({
+            player_name: player.name,
+            player_lastname: player.lastname,
+            player_number: player.number,
+            player_dni: player.dni,
+            card_image_url: player.cardUrl,
+            player_image_url: player.imageUrl,
+            birth_date: player.birthDate ? new Date(player.birthDate) : undefined,
+            team_id: player.teamId,
+            category_id: player.categoryId,
+            is_active: player.isActive ?? true,
+        }));
+        const result = await playerRepository.createMany(playersData, tx);
+        return { count: result.count };
     }
     async update(dni, data, tx) {
         const updateData = {};
@@ -60,6 +80,8 @@ export class PlayerService {
             updateData.player_dni = data.dni;
         if (data.cardUrl)
             updateData.card_image_url = data.cardUrl;
+        if (data.imageUrl)
+            updateData.player_image_url = data.imageUrl;
         if (data.birthDate)
             updateData.birth_date = new Date(data.birthDate);
         if (data.teamId)
@@ -105,7 +127,14 @@ export class PlayerService {
         if (filter.teamId !== undefined) {
             where.team_id = filter.teamId;
         }
-        Object.assign(where, buildBooleanFilter("is_active", filter.is_active), buildSearchFilter(filter.search, ["player_name", "player_lastname", "player_dni"]));
+        if (filter.categoryId !== undefined) {
+            where.category_id = filter.categoryId;
+        }
+        Object.assign(where, buildBooleanFilter("is_active", filter.is_active), buildSearchFilter(filter.search, [
+            "player_name",
+            "player_lastname",
+            "player_dni",
+        ]));
         const result = await paginate(playerRepository, // Pasamos el Repository al paginador
         { page, limit }, {
             where,
