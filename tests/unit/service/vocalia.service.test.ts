@@ -36,6 +36,7 @@ const mockTx = {
     findUnique: vi.fn(),
   },
   matches: {
+    findUnique: vi.fn(),
     update: vi.fn(),
   },
   tournament_teams: {
@@ -58,7 +59,7 @@ describe("VocaliaService", () => {
       (vocaliaRepository.findByMatchId as any).mockResolvedValue({});
 
       await expect(
-        vocaliaService.create({ matchId: 1, vocalUserId: 2 })
+        vocaliaService.create({ matchId: 1, vocalUserId: 2 }),
       ).rejects.toThrow("Este partido ya tiene vocal asignado.");
     });
 
@@ -89,7 +90,7 @@ describe("VocaliaService", () => {
       (vocaliaRepository.findByMatchAndVocal as any).mockResolvedValue(null);
 
       await expect(
-        vocaliaService.update(1, { observations: "test" }, 99)
+        vocaliaService.update(1, { observations: "test" }, 99),
       ).rejects.toThrow("No tiene permisos para modificar esta vocalía.");
     });
 
@@ -114,43 +115,45 @@ describe("VocaliaService", () => {
   describe("finalize()", () => {
     it("lanza error si el marcador es negativo", async () => {
       await expect(
-        vocaliaService.finalize(1, { localScore: -1, awayScore: 0 })
+        vocaliaService.finalize(1, { localScore: -1, awayScore: 0 }),
       ).rejects.toThrow("El marcador no puede ser negativo.");
     });
 
-    it("lanza error si la vocalía no existe", async () => {
+    it("lanza error si el partido no existe", async () => {
       (prisma.$transaction as any).mockImplementation(async (cb: any) => {
-        mockTx.vocalias.findUnique.mockResolvedValue(null);
+        mockTx.matches.findUnique.mockResolvedValue(null);
         return cb(mockTx);
       });
 
       await expect(
-        vocaliaService.finalize(1, { localScore: 1, awayScore: 0 })
-      ).rejects.toThrow("No existe vocalía.");
+        vocaliaService.finalize(1, { localScore: 1, awayScore: 0 }),
+      ).rejects.toThrow("El partido no existe.");
     });
 
     it("lanza error si el partido ya fue finalizado", async () => {
       (prisma.$transaction as any).mockImplementation(async (cb: any) => {
-        mockTx.vocalias.findUnique.mockResolvedValue({
-          match: { status: "finalizado" },
+        mockTx.matches.findUnique.mockResolvedValue({
+          status: "finalizado",
+          tournament_id: 1n,
+          local_team_id: 1n,
+          away_team_id: 2n,
         });
         return cb(mockTx);
       });
 
       await expect(
-        vocaliaService.finalize(1, { localScore: 1, awayScore: 0 })
+        vocaliaService.finalize(1, { localScore: 1, awayScore: 0 }),
       ).rejects.toThrow("El partido ya fue finalizado.");
     });
 
     it("finaliza partido y asigna puntos correctamente (gana local)", async () => {
       (prisma.$transaction as any).mockImplementation(async (cb: any) => {
-        mockTx.vocalias.findUnique.mockResolvedValue({
-          match: {
-            status: "programado",
-            tournament_id: 1n,
-            local_team_id: 10n,
-            away_team_id: 20n,
-          },
+        mockTx.matches.findUnique.mockResolvedValue({
+          match_id: 1n,
+          status: "programado",
+          tournament_id: 1n,
+          local_team_id: 10n,
+          away_team_id: 20n,
         });
 
         mockTx.tournament_teams.findUnique
@@ -178,7 +181,7 @@ describe("VocaliaService", () => {
       (vocaliaRepository.findByMatchId as any).mockResolvedValue(null);
 
       await expect(vocaliaService.getByMatchId(1)).rejects.toThrow(
-        "No existe vocalía para este partido."
+        "No existe vocalía para este partido.",
       );
     });
   });
