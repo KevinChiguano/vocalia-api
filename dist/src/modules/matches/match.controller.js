@@ -1,7 +1,7 @@
 import { matchService } from "./match.service";
 import { ok, fail } from "@/utils/response";
 import { handlePrismaError } from "@/utils/prismaErrorHandler";
-import { parseNumber, parseString, parseDate, parseEnum } from "@/utils/parseFilters";
+import { parseNumber, parseString, parseDate, parseArray, } from "@/utils/parseFilters";
 export const matchController = {
     create: async (req, res) => {
         try {
@@ -18,6 +18,17 @@ export const matchController = {
             const id = Number(req.params.id);
             const validated = req.body;
             const match = await matchService.update(id, validated);
+            return res.json(ok(match));
+        }
+        catch (e) {
+            return handlePrismaError(e, res);
+        }
+    },
+    updateStatus: async (req, res) => {
+        try {
+            const id = Number(req.params.id);
+            const { status } = req.body;
+            const match = await matchService.update(id, { status });
             return res.json(ok(match));
         }
         catch (e) {
@@ -54,7 +65,7 @@ export const matchController = {
         const limit = Number(req.query.limit) || 10;
         const filter = {
             tournamentId: parseNumber(req.query.tournamentId, { min: 1 }),
-            status: parseEnum(req.query.status, ["programado", "en_curso", "finalizado", "suspendido", "cancelado"]),
+            status: parseArray(req.query.status),
             stage: parseString(req.query.stage),
             matchDateFrom: parseDate(req.query.matchDateFrom),
             matchDateTo: parseDate(req.query.matchDateTo),

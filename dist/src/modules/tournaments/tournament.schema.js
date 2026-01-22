@@ -14,10 +14,6 @@ const dateSchema = z
     .nullable()
     .optional();
 const tournamentBase = {
-    leagueId: z
-        .number()
-        .int()
-        .positive("El ID de la liga debe ser un número positivo."),
     name: z
         .string()
         .min(5, "El nombre debe tener al menos 5 caracteres.")

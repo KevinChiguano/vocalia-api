@@ -2,6 +2,10 @@ import prisma from "@/config/prisma";
 import { statisticsRepository } from "./statistics.repository";
 import { redis } from "@/config/redis";
 const CACHE_TTL = 60 * 5; // 5 minutos
+// Helper to safely convert BigInts to Numbers
+const sanitizeResponse = (data) => {
+    return JSON.parse(JSON.stringify(data, (key, value) => typeof value === "bigint" ? Number(value) : value));
+};
 export class StatisticsService {
     async playersStatsByTournament(tournamentId, page = 1, limit = 20) {
         const cacheKey = `stats:players:${tournamentId}:page:${page}:limit:${limit}`;
@@ -13,25 +17,25 @@ export class StatisticsService {
             statisticsRepository.playersByTournament(tournamentId, skip, limit),
             statisticsRepository.countPlayersByTournament(tournamentId),
         ]);
-        const totalPages = Math.ceil(total / limit);
+        const totalPages = Math.ceil(Number(total) / limit);
         const [goals, sanctions, matches] = await Promise.all([
             statisticsRepository.goalsByPlayer(tournamentId),
             statisticsRepository.sanctionsByPlayer(tournamentId),
             statisticsRepository.matchesPlayedByPlayer(tournamentId),
         ]);
-        const goalsMap = new Map(goals.map((g) => [Number(g.player_id), g._count.player_id]));
-        const matchesMap = new Map(matches.map((m) => [Number(m.player_id), m._count.match_id]));
+        const goalsMap = new Map(goals.map((g) => [Number(g.player_id), Number(g._count.player_id)]));
+        const matchesMap = new Map(matches.map((m) => [Number(m.player_id), Number(m._count.match_id)]));
         const yellowMap = new Map();
         const redMap = new Map();
         sanctions.forEach((s) => {
             const id = Number(s.player_id);
             if (s.type === "amarilla")
-                yellowMap.set(id, s._count.type);
+                yellowMap.set(id, Number(s._count.type));
             if (s.type === "roja_directa" || s.type === "doble_amarilla") {
-                redMap.set(id, (redMap.get(id) || 0) + s._count.type);
+                redMap.set(id, (redMap.get(id) || 0) + Number(s._count.type));
             }
         });
-        const response = {
+        const response = sanitizeResponse({
             items: players.map((p) => ({
                 player: {
                     id: p.player_id,
@@ -53,7 +57,7 @@ export class StatisticsService {
                 limit,
                 totalPages,
             },
-        };
+        });
         await redis.set(cacheKey, JSON.stringify(response), "EX", CACHE_TTL);
         return response;
     }
@@ -83,15 +87,15 @@ export class StatisticsService {
             list.push(Number(p.player_id));
             teamPlayers.set(Number(p.team_id), list);
         });
-        return teams.map((t) => {
+        const data = teams.map((t) => {
             const ids = teamPlayers.get(Number(t.team_id)) ?? [];
             const yellowCards = sanctions
                 .filter((s) => s.type === "amarilla" && ids.includes(Number(s.player_id)))
-                .reduce((sum, s) => sum + s._count.type, 0);
+                .reduce((sum, s) => sum + Number(s._count.type), 0);
             const redCards = sanctions
                 .filter((s) => (s.type === "roja_directa" || s.type === "doble_amarilla") &&
                 ids.includes(Number(s.player_id)))
-                .reduce((sum, s) => sum + s._count.type, 0);
+                .reduce((sum, s) => sum + Number(s._count.type), 0);
             return {
                 team: {
                     id: t.team_id,
@@ -109,6 +113,7 @@ export class StatisticsService {
                 redCards,
             };
         });
+        return sanitizeResponse(data);
     }
     async topScorersByTournament(tournamentId, limit = 10) {
         const goals = await statisticsRepository.topScorers(tournamentId, limit);
@@ -125,17 +130,18 @@ export class StatisticsService {
                 },
             },
         });
-        return goals.map((g) => {
+        const data = goals.map((g) => {
             const p = players.find((p) => p.player_id === g.player_id);
             return {
                 player: {
-                    id: p.player_id,
+                    id: p.player_id, // sanitized automatically
                     name: `${p.player_name} ${p.player_lastname ?? ""}`.trim(),
                 },
                 team: p.team.team_name,
-                goals: g._count.player_id,
+                goals: g._count.player_id, // sanitized automatically
             };
         });
+        return sanitizeResponse(data);
     }
     async dashboardStats(tournamentId) {
         const cacheKey = `stats:dashboard:${tournamentId}`;
@@ -146,8 +152,8 @@ export class StatisticsService {
         const yellowCards = data.sanctions.find((s) => s.type === "amarilla")?._count.type ?? 0;
         const redCards = data.sanctions
             .filter((s) => s.type !== "amarilla")
-            .reduce((sum, s) => sum + s._count.type, 0);
-        const response = {
+            .reduce((sum, s) => sum + Number(s._count.type), 0);
+        const response = sanitizeResponse({
             counts: {
                 teams: data.teams,
                 players: data.players,
@@ -156,7 +162,7 @@ export class StatisticsService {
                 yellowCards,
                 redCards,
             },
-        };
+        });
         await redis.set(cacheKey, JSON.stringify(response), "EX", 300);
         return response;
     }
@@ -169,8 +175,8 @@ export class StatisticsService {
         const yellowCards = data.sanctions.find((s) => s.type === "amarilla")?._count.type ?? 0;
         const redCards = data.sanctions
             .filter((s) => s.type === "roja_directa" || s.type === "doble_amarilla")
-            .reduce((sum, s) => sum + s._count.type, 0);
-        const response = {
+            .reduce((sum, s) => sum + Number(s._count.type), 0);
+        const response = sanitizeResponse({
             counts: {
                 tournaments: data.tournaments,
                 teams: data.teams,
@@ -180,7 +186,7 @@ export class StatisticsService {
                 yellowCards,
                 redCards,
             },
-        };
+        });
         await redis.set(cacheKey, JSON.stringify(response), "EX", CACHE_TTL);
         return response;
     }

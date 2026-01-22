@@ -6,6 +6,7 @@ export const teamSelectFields = {
     team_logo: true,
     is_active: true,
     created_at: true,
+    category_id: true,
     category: {
         select: {
             name: true,

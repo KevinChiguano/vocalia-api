@@ -132,9 +132,6 @@ export class VocaliaService {
           where: { match_id: BigInt(matchId) },
           data: {
             vocalia_data: data.vocaliaData,
-            updated_at: new Date(), // updated_at doesn't exist in vocalias schema based on previous read, checking schema again.
-            // Wait, schema check: "created_at" exists, "updated_at" DOES NOT exist in vocalias table definition in step 29.
-            // Removing updated_at
           },
         });
       }

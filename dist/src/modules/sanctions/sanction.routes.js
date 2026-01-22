@@ -32,7 +32,7 @@ router.use(authMiddleware.verifyToken);
  *             schema:
  *               $ref: '#/components/schemas/SanctionResponse'
  */
-router.post("/", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createSanctionSchema), sanctionController.create);
+router.post("/", strictLimiter, roleGuard(["ADMIN", "VOCAL"]), validateSchema(createSanctionSchema), sanctionController.create);
 /**
  * @openapi
  * /sanctions/bulk:
@@ -84,7 +84,7 @@ router.post("/bulk", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createS
  *             schema:
  *               $ref: '#/components/schemas/SanctionResponse'
  */
-router.put("/:id", roleGuard(["ADMIN"]), validateSchema(updateSanctionSchema), sanctionController.update);
+router.put("/:id", roleGuard(["ADMIN", "VOCAL"]), validateSchema(updateSanctionSchema), sanctionController.update);
 /**
  * @openapi
  * /sanctions/{id}:
@@ -107,7 +107,7 @@ router.put("/:id", roleGuard(["ADMIN"]), validateSchema(updateSanctionSchema), s
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.delete("/:id", roleGuard(["ADMIN"]), sanctionController.delete);
+router.delete("/:id", roleGuard(["ADMIN", "VOCAL"]), sanctionController.delete);
 /**
  * @openapi
  * /sanctions:

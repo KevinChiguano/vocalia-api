@@ -80,7 +80,7 @@ router.put("/:matchId", roleGuard(["VOCAL", "ADMIN"]), validateSchema(updateVoca
  *       200:
  *         description: Partido finalizado correctamente
  */
-router.post("/:matchId/finalize", roleGuard(["ADMIN"]), vocaliaController.finalize);
+router.post("/:matchId/finalize", roleGuard(["ADMIN", "VOCAL"]), vocaliaController.finalize);
 /**
  * @openapi
  * /vocalias/match/{matchId}:

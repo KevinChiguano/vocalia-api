@@ -14,6 +14,37 @@ export const vocaliaSelectFields = {
             status: true,
             local_score: true,
             away_score: true,
+            match_date: true,
+            match_day: true,
+            stage: true,
+            category: true,
+            localTeam: {
+                select: {
+                    team_id: true,
+                    team_name: true,
+                    team_logo: true,
+                },
+            },
+            awayTeam: {
+                select: {
+                    team_id: true,
+                    team_name: true,
+                    team_logo: true,
+                },
+            },
+            field: {
+                select: {
+                    field_id: true,
+                    name: true,
+                    location: true,
+                },
+            },
+            tournament: {
+                select: {
+                    tournament_id: true,
+                    name: true,
+                },
+            },
         },
     },
 };

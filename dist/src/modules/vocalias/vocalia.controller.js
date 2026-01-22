@@ -28,7 +28,7 @@ export const vocaliaController = {
     finalize: async (req, res) => {
         try {
             const matchId = Number(req.params.matchId);
-            const { localScore, awayScore } = req.body;
+            const { localScore, awayScore, vocaliaData } = req.body;
             if (typeof localScore !== "number" ||
                 typeof awayScore !== "number" ||
                 localScore < 0 ||
@@ -41,6 +41,7 @@ export const vocaliaController = {
             const result = await vocaliaService.finalize(matchId, {
                 localScore,
                 awayScore,
+                vocaliaData,
             });
             return res.json(ok(result));
         }
@@ -51,8 +52,18 @@ export const vocaliaController = {
     getByMatch: async (req, res) => {
         try {
             const matchId = Number(req.params.matchId);
-            const vocalia = await vocaliaService.getByMatchId(matchId);
-            return res.json(ok(vocalia));
+            try {
+                const vocalia = await vocaliaService.getByMatchId(matchId);
+                return res.json(ok(vocalia));
+            }
+            catch (error) {
+                // Si no existe vocalía y es ADMIN, devolvemos la "vocalía virtual"
+                if (req.user?.rol === "ADMIN") {
+                    const virtualVocalia = await vocaliaService.getMatchAsVocalia(matchId);
+                    return res.json(ok(virtualVocalia));
+                }
+                throw error;
+            }
         }
         catch (e) {
             return handlePrismaError(e, res);

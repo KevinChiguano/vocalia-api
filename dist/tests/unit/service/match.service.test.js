@@ -33,12 +33,10 @@ describe("MatchService", () => {
                 category: "Primera",
                 matchDay: 1,
                 matchDate: new Date(),
-                location: "Quito",
             });
             expect(result).toMatchObject({
                 id: 1,
                 stage: "final",
-                location: "Quito",
                 localScore: 0,
                 awayScore: 0,
                 category: "Primera",

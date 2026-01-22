@@ -3,16 +3,15 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { paginate } from "@/utils/pagination";
 import { matchRepository, matchSelectFields } from "./match.repository"; // Importación clave
 import prisma from "@/config/prisma";
-import { convertToEcuadorTime } from "@/utils/convert.time";
 import { buildSearchFilter, buildDateRangeFilter, } from "@/utils/filter.builder";
 const mapMatchKeys = (match) => {
     if (!match)
         return null;
     return {
         id: match.match_id,
-        date: convertToEcuadorTime(match.match_date),
+        date: match.match_date,
         stage: match.stage,
-        location: match.location,
+        // location: match.location,
         status: match.status,
         localScore: match.local_score,
         awayScore: match.away_score,
@@ -36,6 +35,19 @@ const mapMatchKeys = (match) => {
                 name: match.tournament.name,
             }
             : null,
+        field: match.field
+            ? {
+                id: match.field.field_id,
+                name: match.field.name,
+                location: match.field.location,
+            }
+            : null,
+        vocal: match.vocalias?.[0]?.vocalUser
+            ? {
+                id: match.vocalias[0].vocalUser.user_id,
+                name: match.vocalias[0].vocalUser.user_name,
+            }
+            : null,
     };
 };
 export class MatchService {
@@ -49,7 +61,8 @@ export class MatchService {
                 category: data.category,
                 match_day: data.matchDay,
                 match_date: data.matchDate,
-                location: data.location,
+                // location: data.location,
+                field_id: data.fieldId,
                 status: data.status ?? "programado",
                 local_score: 0,
                 away_score: 0,
@@ -74,8 +87,9 @@ export class MatchService {
             updateData.match_day = data.matchDay;
         if (data.matchDate !== undefined)
             updateData.match_date = data.matchDate;
-        if (data.location !== undefined)
-            updateData.location = data.location;
+        if (data.fieldId !== undefined)
+            updateData.field_id = data.fieldId;
+        // if (data.location !== undefined) updateData.location = data.location;
         if (data.status !== undefined)
             updateData.status = data.status;
         if (data.localScore !== undefined)
@@ -83,9 +97,22 @@ export class MatchService {
         if (data.awayScore !== undefined)
             updateData.away_score = data.awayScore;
         try {
-            const updatedMatch = await matchRepository.update(
-            // Uso del Repository
-            id, updateData, tx);
+            const updatedMatch = await prisma.$transaction(async (tx) => {
+                const match = await matchRepository.update(id, updateData, tx);
+                if (data.vocalUserId !== undefined) {
+                    // Update or Create vocalia
+                    await tx.vocalias.upsert({
+                        where: { match_id: BigInt(id) },
+                        update: { vocal_user_id: BigInt(data.vocalUserId) },
+                        create: {
+                            match_id: BigInt(id),
+                            vocal_user_id: BigInt(data.vocalUserId),
+                            vocalia_data: {},
+                        },
+                    });
+                }
+                return match;
+            });
             return mapMatchKeys(updatedMatch);
         }
         catch (e) {
@@ -123,7 +150,12 @@ export class MatchService {
             where.tournament_id = filter.tournamentId;
         }
         if (filter.status !== undefined) {
-            where.status = filter.status;
+            if (Array.isArray(filter.status)) {
+                where.status = { in: filter.status };
+            }
+            else {
+                where.status = filter.status;
+            }
         }
         Object.assign(where, buildSearchFilter(filter.stage, ["stage"]), buildDateRangeFilter("match_date", filter.matchDateFrom, filter.matchDateTo));
         const result = await paginate(matchRepository, { page, limit }, {

@@ -30,6 +30,7 @@ const mockTx = {
         findUnique: vi.fn(),
     },
     matches: {
+        findUnique: vi.fn(),
         update: vi.fn(),
     },
     tournament_teams: {
@@ -92,17 +93,20 @@ describe("VocaliaService", () => {
         it("lanza error si el marcador es negativo", async () => {
             await expect(vocaliaService.finalize(1, { localScore: -1, awayScore: 0 })).rejects.toThrow("El marcador no puede ser negativo.");
         });
-        it("lanza error si la vocalía no existe", async () => {
+        it("lanza error si el partido no existe", async () => {
             prisma.$transaction.mockImplementation(async (cb) => {
-                mockTx.vocalias.findUnique.mockResolvedValue(null);
+                mockTx.matches.findUnique.mockResolvedValue(null);
                 return cb(mockTx);
             });
-            await expect(vocaliaService.finalize(1, { localScore: 1, awayScore: 0 })).rejects.toThrow("No existe vocalía.");
+            await expect(vocaliaService.finalize(1, { localScore: 1, awayScore: 0 })).rejects.toThrow("El partido no existe.");
         });
         it("lanza error si el partido ya fue finalizado", async () => {
             prisma.$transaction.mockImplementation(async (cb) => {
-                mockTx.vocalias.findUnique.mockResolvedValue({
-                    match: { status: "finalizado" },
+                mockTx.matches.findUnique.mockResolvedValue({
+                    status: "finalizado",
+                    tournament_id: 1n,
+                    local_team_id: 1n,
+                    away_team_id: 2n,
                 });
                 return cb(mockTx);
             });
@@ -110,13 +114,12 @@ describe("VocaliaService", () => {
         });
         it("finaliza partido y asigna puntos correctamente (gana local)", async () => {
             prisma.$transaction.mockImplementation(async (cb) => {
-                mockTx.vocalias.findUnique.mockResolvedValue({
-                    match: {
-                        status: "programado",
-                        tournament_id: 1n,
-                        local_team_id: 10n,
-                        away_team_id: 20n,
-                    },
+                mockTx.matches.findUnique.mockResolvedValue({
+                    match_id: 1n,
+                    status: "programado",
+                    tournament_id: 1n,
+                    local_team_id: 10n,
+                    away_team_id: 20n,
                 });
                 mockTx.tournament_teams.findUnique
                     .mockResolvedValueOnce({ tournament_team_id: 100 })
