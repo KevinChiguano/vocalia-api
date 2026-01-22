@@ -1,14 +1,15 @@
 // player.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { convertToEcuadorTime } from "@/utils/convert.time";
-import type { CreatePlayerInput, UpdatePlayerInput } from "./player.schema";
+import type {
+  CreatePlayerInput,
+  UpdatePlayerInput,
+  BulkCreatePlayerInput,
+} from "./player.schema";
 import { paginate } from "@/utils/pagination";
 import { playerRepository, playerSelectFields } from "./player.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
-import {
-  buildSearchFilter,
-  buildBooleanFilter,
-} from "@/utils/filter.builder";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 
 const mapPlayerKeys = (player: any) => {
   if (!player) return null;
@@ -19,7 +20,10 @@ const mapPlayerKeys = (player: any) => {
     number: player.player_number,
     dni: player.player_dni,
     cardUrl: player.card_image_url,
-    birthDate: player.birth_date ? player.birth_date.toISOString().split('T')[0] : null,
+    imageUrl: player.player_image_url,
+    birthDate: player.birth_date
+      ? player.birth_date.toISOString().split("T")[0]
+      : null,
     team: player.team
       ? {
           id: player.team.team_id,
@@ -47,15 +51,34 @@ export class PlayerService {
         player_number: data.number,
         player_dni: data.dni,
         card_image_url: data.cardUrl,
+        player_image_url: data.imageUrl,
         birth_date: data.birthDate ? new Date(data.birthDate) : undefined,
         team_id: data.teamId,
         category_id: data.categoryId,
         is_active: data.isActive ?? true,
       },
-      tx
+      tx,
     );
 
     return mapPlayerKeys(newPlayer);
+  }
+
+  async createMany(data: BulkCreatePlayerInput, tx?: PrismaTx) {
+    const playersData = data.map((player) => ({
+      player_name: player.name,
+      player_lastname: player.lastname,
+      player_number: player.number,
+      player_dni: player.dni,
+      card_image_url: player.cardUrl,
+      player_image_url: player.imageUrl,
+      birth_date: player.birthDate ? new Date(player.birthDate) : undefined,
+      team_id: player.teamId,
+      category_id: player.categoryId,
+      is_active: player.isActive ?? true,
+    }));
+
+    const result = await playerRepository.createMany(playersData, tx);
+    return { count: result.count };
   }
 
   async update(dni: string, data: UpdatePlayerInput, tx?: PrismaTx) {
@@ -66,6 +89,7 @@ export class PlayerService {
     if (data.number) updateData.player_number = data.number;
     if (data.dni) updateData.player_dni = data.dni;
     if (data.cardUrl) updateData.card_image_url = data.cardUrl;
+    if (data.imageUrl) updateData.player_image_url = data.imageUrl;
     if (data.birthDate) updateData.birth_date = new Date(data.birthDate);
     if (data.teamId) updateData.team_id = data.teamId;
     if (data.categoryId) updateData.category_id = data.categoryId;
@@ -81,7 +105,7 @@ export class PlayerService {
         // Uso del Repository
         dni,
         updateData,
-        tx
+        tx,
       );
       return mapPlayerKeys(updatedPlayer);
     } catch (e) {
@@ -99,7 +123,7 @@ export class PlayerService {
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
         throw new Error(
-          `El jugador con dni ${dni} no fue encontrado para borrar.`
+          `El jugador con dni ${dni} no fue encontrado para borrar.`,
         );
       }
       throw e;
@@ -119,10 +143,18 @@ export class PlayerService {
       where.team_id = filter.teamId;
     }
 
+    if (filter.categoryId !== undefined) {
+      where.category_id = filter.categoryId;
+    }
+
     Object.assign(
       where,
       buildBooleanFilter("is_active", filter.is_active),
-      buildSearchFilter(filter.search, ["player_name", "player_lastname", "player_dni"])
+      buildSearchFilter(filter.search, [
+        "player_name",
+        "player_lastname",
+        "player_dni",
+      ]),
     );
 
     const result = await paginate(
@@ -133,7 +165,7 @@ export class PlayerService {
         select: playerSelectFields,
         orderBy: { player_id: "desc" },
       },
-      tx
+      tx,
     );
 
     return {

@@ -5,7 +5,6 @@ import type { PrismaTx } from "@/config/prisma.types";
 
 export const tournamentSelectFields = {
   tournament_id: true,
-  league_id: true,
   name: true,
   start_date: true,
   end_date: true,

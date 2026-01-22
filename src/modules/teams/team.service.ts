@@ -21,6 +21,7 @@ const mapTeamKeys = (team: any) => {
         }
       : null,
     isActive: team.is_active,
+    categoryId: team.category_id ? Number(team.category_id) : undefined,
     createdAt: convertToEcuadorTime(team.created_at),
   };
 };
@@ -34,7 +35,7 @@ export class TeamService {
         category_id: data.categoryId ?? null, // Use null if undefined
         is_active: data.isActive ?? true,
       },
-      tx
+      tx,
     );
 
     return mapTeamKeys(newTeam);
@@ -75,7 +76,7 @@ export class TeamService {
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
         throw new Error(
-          `El equipo con ID ${id} no fue encontrado para borrar.`
+          `El equipo con ID ${id} no fue encontrado para borrar.`,
         );
       }
       throw e;
@@ -91,13 +92,13 @@ export class TeamService {
     const where: any = {};
 
     if (filter.category !== undefined) {
-      where.team_category = filter.category;
+      where.category_id = Number(filter.category);
     }
 
     Object.assign(
       where,
       buildBooleanFilter("is_active", filter.is_active),
-      buildSearchFilter(filter.search, ["team_name"])
+      buildSearchFilter(filter.search, ["team_name"]),
     );
 
     const result = await paginate(
@@ -108,7 +109,7 @@ export class TeamService {
         select: teamSelectFields,
         orderBy: { team_id: "desc" },
       },
-      tx
+      tx,
     );
 
     return {

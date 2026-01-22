@@ -42,9 +42,9 @@ router.use(authMiddleware.verifyToken);
 router.post(
   "/",
   strictLimiter,
-  roleGuard(["ADMIN"]),
+  roleGuard(["ADMIN", "VOCAL"]),
   validateSchema(createSubstitutionSchema),
-  substitutionController.create
+  substitutionController.create,
 );
 
 /**
@@ -74,7 +74,7 @@ router.post(
   strictLimiter,
   roleGuard(["ADMIN"]),
   validateSchema(createSubstitutionsBulkSchema),
-  substitutionController.bulkCreate
+  substitutionController.bulkCreate,
 );
 
 /**
@@ -107,9 +107,9 @@ router.post(
  */
 router.put(
   "/:id",
-  roleGuard(["ADMIN"]),
+  roleGuard(["ADMIN", "VOCAL"]),
   validateSchema(updateSubstitutionSchema),
-  substitutionController.update
+  substitutionController.update,
 );
 
 /**
@@ -134,7 +134,11 @@ router.put(
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.delete("/:id", roleGuard(["ADMIN"]), substitutionController.delete);
+router.delete(
+  "/:id",
+  roleGuard(["ADMIN", "VOCAL"]),
+  substitutionController.delete,
+);
 
 /**
  * @openapi

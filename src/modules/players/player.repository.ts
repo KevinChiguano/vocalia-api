@@ -10,6 +10,7 @@ export const playerSelectFields = {
   player_number: true,
   player_dni: true,
   card_image_url: true,
+  player_image_url: true,
   birth_date: true,
   team_id: true,
   team: {
@@ -53,6 +54,13 @@ export class PlayerRepository {
     return this.getClient(tx).players.create({
       data,
       select: playerSelectFields,
+    });
+  }
+
+  async createMany(data: Prisma.playersCreateManyInput[], tx?: PrismaTx) {
+    return this.getClient(tx).players.createMany({
+      data,
+      skipDuplicates: true,
     });
   }
 

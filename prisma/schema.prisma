@@ -69,11 +69,11 @@ model matches {
   tournament_id BigInt
   local_team_id BigInt
   away_team_id  BigInt
+  field_id      BigInt?
   category      String?
   stage         String
   match_day     Int?
   match_date    DateTime?    @db.Timestamptz(6)
-  location      String?
   status        match_status @default(programado)
   local_score   Int          @default(0)
   away_score    Int          @default(0)
@@ -83,6 +83,7 @@ model matches {
   localTeam  teams       @relation("matches_local_team_idToteams", fields: [local_team_id], references: [team_id], onUpdate: NoAction, map: "fk_matches_local_team")
   awayTeam   teams       @relation("matches_away_team_idToteams", fields: [away_team_id], references: [team_id], onUpdate: NoAction, map: "fk_matches_away_team")
   tournament tournaments @relation(fields: [tournament_id], references: [tournament_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_matches_tournament")
+  field      fields?     @relation(fields: [field_id], references: [field_id], onUpdate: NoAction, map: "fk_matches_field")
 
   goals         goals[]
   sanctions     sanctions[]
@@ -91,6 +92,22 @@ model matches {
   matchPlayers  match_players[]
 
   @@index([tournament_id], map: "idx_matches_tournament")
+  @@index([field_id], map: "idx_matches_field")
+}
+
+// ============================================================
+// MODELO FIELDS (Canchas)
+// ============================================================
+
+model fields {
+  field_id   BigInt    @id @default(autoincrement())
+  name       String    @unique
+  location   String? // URL maps or coordinates
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @updatedAt @db.Timestamptz(6)
+
+  matches matches[]
 }
 
 // ============================================================
@@ -98,17 +115,18 @@ model matches {
 // ============================================================
 
 model players {
-  player_id       BigInt    @id @default(autoincrement())
-  player_name     String
-  player_lastname String?
-  player_number   Int?
-  player_dni      String    @unique
-  card_image_url  String?
-  birth_date      DateTime? @db.Date
-  team_id         BigInt
-  created_at      DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime? @db.Timestamptz(6)
-  is_active       Boolean   @default(true)
+  player_id        BigInt    @id @default(autoincrement())
+  player_name      String
+  player_lastname  String?
+  player_number    Int?
+  player_dni       String    @unique
+  card_image_url   String?
+  player_image_url String?
+  birth_date       DateTime? @db.Date
+  team_id          BigInt
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime? @db.Timestamptz(6)
+  is_active        Boolean   @default(true)
 
   goals     goals[]
   team      teams       @relation(fields: [team_id], references: [team_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_players_team")
@@ -193,7 +211,7 @@ model substitutions {
 
 model teams {
   team_id    BigInt   @id @default(autoincrement())
-  team_name  String   @unique
+  team_name  String
   team_logo  String?
   is_active  Boolean  @default(true)
   created_at DateTime @default(now()) @db.Timestamptz(6)
@@ -208,24 +226,8 @@ model teams {
   category    categories? @relation(fields: [category_id], references: [category_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_teams_category")
   category_id BigInt?
 
+  @@unique([team_name, category_id], name: "uq_team_name_category")
   @@index([category_id], map: "idx_teams_category")
-}
-
-// ============================================================
-// MODELO LEAGUES
-// ============================================================
-
-model leagues {
-  league_id  BigInt    @id @default(autoincrement())
-  name       String
-  image_url  String?
-  is_active  Boolean   @default(true)
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at DateTime? @db.Timestamptz(6)
-
-  tournaments tournaments[]
-
-  @@index([is_active], map: "idx_leagues_active")
 }
 
 // ============================================================
@@ -234,18 +236,14 @@ model leagues {
 
 model tournaments {
   tournament_id BigInt    @id @default(autoincrement())
-  league_id     BigInt
   name          String
   start_date    DateTime? @db.Date
   end_date      DateTime? @db.Date
   is_active     Boolean   @default(true)
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
 
-  league          leagues            @relation(fields: [league_id], references: [league_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tournaments_league")
   matches         matches[]
   tournamentTeams tournament_teams[]
-
-  @@index([league_id], map: "idx_tournaments_league")
 }
 
 // ============================================================

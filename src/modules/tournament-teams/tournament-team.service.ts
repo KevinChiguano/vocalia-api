@@ -17,6 +17,7 @@ const mapTournamentTeamKeys = (tt: any) => {
       ? {
           id: tt.team.team_id,
           name: tt.team.team_name,
+          logo: tt.team.team_logo,
         }
       : null,
     category: tt.category
@@ -47,7 +48,7 @@ export class TournamentTeamService {
           team_id: BigInt(data.teamId),
           category_id: data.categoryId ? BigInt(data.categoryId) : undefined,
         },
-        tx
+        tx,
       );
 
       return mapTournamentTeamKeys(created);
@@ -101,7 +102,7 @@ export class TournamentTeamService {
   async listByTournament(tournamentId: number, tx?: PrismaTx) {
     const items = await tournamentTeamRepository.findByTournament(
       tournamentId,
-      tx
+      tx,
     );
 
     return items.map(mapTournamentTeamKeys);

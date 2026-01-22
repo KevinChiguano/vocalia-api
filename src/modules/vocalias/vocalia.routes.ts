@@ -37,7 +37,7 @@ router.post(
   "/",
   roleGuard(["ADMIN"]),
   validateSchema(createVocaliaSchema),
-  vocaliaController.create
+  vocaliaController.create,
 );
 
 /**
@@ -68,7 +68,7 @@ router.put(
   "/:matchId",
   roleGuard(["VOCAL", "ADMIN"]),
   validateSchema(updateVocaliaSchema),
-  vocaliaController.update
+  vocaliaController.update,
 );
 
 /**
@@ -97,8 +97,8 @@ router.put(
  */
 router.post(
   "/:matchId/finalize",
-  roleGuard(["ADMIN"]),
-  vocaliaController.finalize
+  roleGuard(["ADMIN", "VOCAL"]),
+  vocaliaController.finalize,
 );
 
 /**
@@ -126,7 +126,7 @@ router.post(
 router.get(
   "/match/:matchId",
   roleGuard(["ADMIN", "VOCAL"]),
-  vocaliaController.getByMatch
+  vocaliaController.getByMatch,
 );
 
 /**

@@ -20,6 +20,7 @@ export const tournamentTeamSelectFields = {
     select: {
       team_id: true,
       team_name: true,
+      team_logo: true,
     },
   },
   category_id: true,
@@ -37,7 +38,7 @@ export class TournamentTeamRepository {
 
   async create(
     data: Prisma.tournament_teamsUncheckedCreateInput,
-    tx?: PrismaTx
+    tx?: PrismaTx,
   ) {
     return this.getClient(tx).tournament_teams.create({
       data,
@@ -63,7 +64,7 @@ export class TournamentTeamRepository {
   async update(
     id: number,
     data: Prisma.tournament_teamsUpdateInput,
-    tx?: PrismaTx
+    tx?: PrismaTx,
   ) {
     return this.getClient(tx).tournament_teams.update({
       where: { tournament_team_id: BigInt(id) },

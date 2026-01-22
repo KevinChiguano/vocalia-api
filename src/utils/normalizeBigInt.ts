@@ -7,9 +7,13 @@ export const normalizeBigInt = (value: any): any => {
     return value.map(normalizeBigInt);
   }
 
+  if (value instanceof Date) {
+    return value;
+  }
+
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, normalizeBigInt(v)])
+      Object.entries(value).map(([k, v]) => [k, normalizeBigInt(v)]),
     );
   }
 

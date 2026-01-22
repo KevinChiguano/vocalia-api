@@ -77,4 +77,23 @@ export const userController = {
         .json(fail("Error al obtener la lista de usuarios."));
     }
   },
+
+  getRoles: async (req: Request, res: Response) => {
+    try {
+      const roles = await userService.getRoles();
+      return res.json(ok(roles));
+    } catch (e: any) {
+      return res.status(500).json(fail("Error al obtener los roles."));
+    }
+  },
+
+  toggleStatus: async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const user = await userService.toggleStatus(id);
+      return res.json(ok(user));
+    } catch (e: any) {
+      return handlePrismaError(e, res);
+    }
+  },
 };

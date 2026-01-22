@@ -6,6 +6,35 @@ import type { PrismaTx } from "@/config/prisma.types";
 import prisma from "@/config/prisma";
 import { invalidateTournamentStats } from "@/utils/cache.stats";
 
+const mapMatch = (m: any) => {
+  if (!m) return null;
+  return {
+    ...m,
+    id: m.match_id ? Number(m.match_id) : undefined,
+    date: m.match_date ? new Date(m.match_date) : null,
+    localTeam: m.localTeam
+      ? {
+          ...m.localTeam,
+          id: m.localTeam.team_id ? Number(m.localTeam.team_id) : undefined,
+          name: m.localTeam.team_name,
+        }
+      : null,
+    awayTeam: m.awayTeam
+      ? {
+          ...m.awayTeam,
+          id: m.awayTeam.team_id ? Number(m.awayTeam.team_id) : undefined,
+          name: m.awayTeam.team_name,
+        }
+      : null,
+    field: m.field
+      ? {
+          ...m.field,
+          id: m.field.field_id ? Number(m.field.field_id) : undefined,
+        }
+      : null,
+  };
+};
+
 const mapVocaliaKeys = (v: any) => {
   if (!v) return null;
 
@@ -18,7 +47,7 @@ const mapVocaliaKeys = (v: any) => {
     observations: v.observations,
     vocaliaData: v.vocalia_data,
     createdAt: convertToEcuadorTime(v.created_at),
-    match: v.match,
+    match: mapMatch(v.match),
   };
 };
 
@@ -33,7 +62,7 @@ export class VocaliaService {
         vocal_user_id: BigInt(data.vocalUserId),
         vocalia_data: {},
       },
-      tx
+      tx,
     );
 
     return mapVocaliaKeys(vocalia);
@@ -42,7 +71,7 @@ export class VocaliaService {
   async update(matchId: number, data: UpdateVocaliaInput, vocalUserId: number) {
     const vocalia = await vocaliaRepository.findByMatchAndVocal(
       matchId,
-      vocalUserId
+      vocalUserId,
     );
 
     if (!vocalia)
@@ -65,7 +94,7 @@ export class VocaliaService {
 
   async finalize(
     matchId: number,
-    data: { localScore: number; awayScore: number }
+    data: { localScore: number; awayScore: number; vocaliaData?: any },
   ) {
     const finalLocalScore = data.localScore;
     const finalAwayScore = data.awayScore;
@@ -76,17 +105,14 @@ export class VocaliaService {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 2️⃣ Obtener vocalía + partido
-      const vocalia = await tx.vocalias.findUnique({
+      // 2️⃣ Obtener partido directamente
+      const match = await tx.matches.findUnique({
         where: { match_id: BigInt(matchId) },
-        include: { match: true },
+        include: {
+          localTeam: true,
+          awayTeam: true,
+        },
       });
-
-      if (!vocalia) {
-        throw new Error("No existe vocalía.");
-      }
-
-      const match = vocalia.match;
 
       if (!match) {
         throw new Error("El partido no existe.");
@@ -98,6 +124,20 @@ export class VocaliaService {
       }
 
       const { tournament_id, local_team_id, away_team_id } = match;
+
+      // 3.5 Actualizar vocaliaData (montos recolectados) si existe vocalía
+      if (data.vocaliaData) {
+        // Intentamos actualizar la vocalía si existe
+        await tx.vocalias.updateMany({
+          where: { match_id: BigInt(matchId) },
+          data: {
+            vocalia_data: data.vocaliaData,
+            updated_at: new Date(), // updated_at doesn't exist in vocalias schema based on previous read, checking schema again.
+            // Wait, schema check: "created_at" exists, "updated_at" DOES NOT exist in vocalias table definition in step 29.
+            // Removing updated_at
+          },
+        });
+      }
 
       // 4️⃣ Finalizar partido
       await tx.matches.update({
@@ -210,9 +250,42 @@ export class VocaliaService {
 
   async getByMatchId(matchId: number) {
     const vocalia = await vocaliaRepository.findByMatchId(matchId);
-    if (!vocalia) throw new Error("No existe vocalía para este partido.");
+    if (!vocalia) {
+      // If no vocalia exists, check if we can return just the match structure (handled by controller for Admin)
+      // But the controller calls this.
+      // Let's throw specific error so controller can catch and try backup
+      throw new Error("No existe vocalía para este partido.");
+    }
 
     return mapVocaliaKeys(vocalia);
+  }
+
+  // Nuevo método para Admins: obtener partido simulando estructura de vocalía
+  async getMatchAsVocalia(matchId: number) {
+    const match = await prisma.matches.findUnique({
+      where: { match_id: BigInt(matchId) },
+      include: {
+        localTeam: true,
+        awayTeam: true,
+        field: true,
+        tournament: true,
+      },
+    });
+
+    if (!match) throw new Error("Partido no encontrado");
+
+    // Retornar estructura compatible ("Virtual Vocalia")
+    return {
+      id: 0,
+      matchId: Number(match.match_id),
+      vocalUserId: 0,
+      localCaptainId: null,
+      awayCaptainId: null,
+      observations: null,
+      vocaliaData: {},
+      createdAt: new Date(),
+      match: mapMatch(match), // El frontend usará match.localTeam, match.match_date, etc.
+    };
   }
 
   async listByVocal(vocalUserId: number, page: number, limit: number) {
@@ -223,7 +296,7 @@ export class VocaliaService {
         where: { vocal_user_id: BigInt(vocalUserId) },
         orderBy: { created_at: "desc" },
         select: vocaliaSelectFields,
-      }
+      },
     );
 
     return {

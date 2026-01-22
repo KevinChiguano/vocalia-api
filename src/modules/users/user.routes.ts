@@ -39,7 +39,7 @@ router.post(
   strictLimiter,
   roleGuard(["ADMIN"]),
   validateSchema(createUserSchema),
-  userController.create
+  userController.create,
 );
 
 /**
@@ -74,7 +74,7 @@ router.put(
   "/:id",
   roleGuard(["ADMIN"]),
   validateSchema(updateUserSchema),
-  userController.update
+  userController.update,
 );
 
 /**
@@ -153,5 +153,43 @@ router.get("/", userController.list);
  *         description: Usuario no encontrado
  */
 router.get("/:id", userController.getById);
+
+/**
+ * @openapi
+ * /users/roles:
+ *   get:
+ *     summary: Listar roles
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de roles
+ */
+router.get("/roles", userController.getRoles);
+
+/**
+ * @openapi
+ * /users/{id}/toggle-status:
+ *   patch:
+ *     summary: Alternar estado del usuario
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Estado actualizado
+ */
+router.patch(
+  "/:id/toggle-status",
+  roleGuard(["ADMIN"]),
+  userController.toggleStatus,
+);
 
 export default router;

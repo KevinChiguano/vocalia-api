@@ -6,10 +6,7 @@ import type { CreateUserInput, UpdateUserInput } from "./user.schema";
 import { paginate } from "@/utils/pagination";
 import { userRepository, userSelectFields } from "./user.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
-import {
-  buildSearchFilter,
-  buildBooleanFilter,
-} from "@/utils/filter.builder";
+import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
 
 // Opciones de Argon2 (se mantiene aquí como lógica de negocio/seguridad)
 const argonOptions = {
@@ -51,7 +48,7 @@ export class UserService {
         rol_id: data.rolId,
         is_active: true,
       },
-      tx
+      tx,
     );
 
     return mapUserKeys(newUser);
@@ -93,7 +90,7 @@ export class UserService {
       // Manejo de error específico de Prisma por no encontrar el registro a borrar
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
         throw new Error(
-          `El usuario con ID ${id} no fue encontrado para eliminar.`
+          `El usuario con ID ${id} no fue encontrado para eliminar.`,
         );
       }
       throw e;
@@ -115,7 +112,7 @@ export class UserService {
     Object.assign(
       where,
       buildBooleanFilter("is_active", filter.is_active),
-      buildSearchFilter(filter.search, ["user_name", "user_email"])
+      buildSearchFilter(filter.search, ["user_name", "user_email"]),
     );
 
     const result = await paginate(
@@ -126,13 +123,33 @@ export class UserService {
         orderBy: { user_id: "desc" },
         select: userSelectFields,
       },
-      tx
+      tx,
     );
 
     return {
       items: result.items.map(mapUserKeys),
       pagination: result.pagination,
     };
+  }
+
+  async getRoles(tx?: PrismaTx) {
+    const roles = await userRepository.getRoles(tx);
+    return roles.map((role) => ({
+      id: Number(role.rol_id),
+      name: role.rol_name,
+    }));
+  }
+
+  async toggleStatus(id: number, tx?: PrismaTx) {
+    const user = await userRepository.findById(id, tx);
+    if (!user) throw new Error(`El usuario con ID ${id} no existe.`);
+
+    const updatedUser = await userRepository.update(
+      id,
+      { is_active: !user.is_active },
+      tx,
+    );
+    return mapUserKeys(updatedUser);
   }
 }
 

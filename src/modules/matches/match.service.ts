@@ -15,9 +15,9 @@ const mapMatchKeys = (match: any) => {
   if (!match) return null;
   return {
     id: match.match_id,
-    date: convertToEcuadorTime(match.match_date),
+    date: match.match_date,
     stage: match.stage,
-    location: match.location,
+    // location: match.location,
     status: match.status,
     localScore: match.local_score,
     awayScore: match.away_score,
@@ -44,6 +44,21 @@ const mapMatchKeys = (match: any) => {
           name: match.tournament.name,
         }
       : null,
+
+    field: match.field
+      ? {
+          id: match.field.field_id,
+          name: match.field.name,
+          location: match.field.location,
+        }
+      : null,
+
+    vocal: match.vocalias?.[0]?.vocalUser
+      ? {
+          id: match.vocalias[0].vocalUser.user_id,
+          name: match.vocalias[0].vocalUser.user_name,
+        }
+      : null,
   };
 };
 
@@ -59,12 +74,13 @@ export class MatchService {
           category: data.category,
           match_day: data.matchDay,
           match_date: data.matchDate,
-          location: data.location,
+          // location: data.location,
+          field_id: data.fieldId,
           status: data.status ?? "programado",
           local_score: 0,
           away_score: 0,
         },
-        tx
+        tx,
       );
 
       return mapMatchKeys(newMatch);
@@ -84,18 +100,31 @@ export class MatchService {
     if (data.category !== undefined) updateData.category = data.category;
     if (data.matchDay !== undefined) updateData.match_day = data.matchDay;
     if (data.matchDate !== undefined) updateData.match_date = data.matchDate;
-    if (data.location !== undefined) updateData.location = data.location;
+    if (data.fieldId !== undefined) updateData.field_id = data.fieldId;
+    // if (data.location !== undefined) updateData.location = data.location;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.localScore !== undefined) updateData.local_score = data.localScore;
     if (data.awayScore !== undefined) updateData.away_score = data.awayScore;
 
     try {
-      const updatedMatch = await matchRepository.update(
-        // Uso del Repository
-        id,
-        updateData,
-        tx
-      );
+      const updatedMatch = await prisma.$transaction(async (tx) => {
+        const match = await matchRepository.update(id, updateData, tx);
+
+        if (data.vocalUserId !== undefined) {
+          // Update or Create vocalia
+          await tx.vocalias.upsert({
+            where: { match_id: BigInt(id) },
+            update: { vocal_user_id: BigInt(data.vocalUserId) },
+            create: {
+              match_id: BigInt(id),
+              vocal_user_id: BigInt(data.vocalUserId),
+              vocalia_data: {},
+            },
+          });
+        }
+
+        return match;
+      });
       return mapMatchKeys(updatedMatch);
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
@@ -112,7 +141,7 @@ export class MatchService {
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
         throw new Error(
-          `El partido con ID ${id} no fue encontrado para eliminar.`
+          `El partido con ID ${id} no fue encontrado para eliminar.`,
         );
       }
       throw e;
@@ -138,13 +167,21 @@ export class MatchService {
     }
 
     if (filter.status !== undefined) {
-      where.status = filter.status;
+      if (Array.isArray(filter.status)) {
+        where.status = { in: filter.status };
+      } else {
+        where.status = filter.status;
+      }
     }
 
     Object.assign(
       where,
       buildSearchFilter(filter.stage, ["stage"]),
-      buildDateRangeFilter("match_date", filter.matchDateFrom, filter.matchDateTo)
+      buildDateRangeFilter(
+        "match_date",
+        filter.matchDateFrom,
+        filter.matchDateTo,
+      ),
     );
 
     const result = await paginate(
@@ -155,7 +192,7 @@ export class MatchService {
         select: matchSelectFields,
         orderBy: { match_id: "desc" },
       },
-      tx
+      tx,
     );
 
     return {

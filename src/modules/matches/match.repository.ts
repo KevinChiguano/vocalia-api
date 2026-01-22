@@ -8,7 +8,7 @@ export const matchSelectFields = {
   match_id: true,
   match_date: true,
   stage: true,
-  location: true,
+  // location: true, // Eliminado
   status: true,
   local_score: true,
   away_score: true,
@@ -17,6 +17,7 @@ export const matchSelectFields = {
   local_team_id: true,
   away_team_id: true,
   video_url: true,
+  field_id: true,
 
   localTeam: {
     select: {
@@ -34,6 +35,23 @@ export const matchSelectFields = {
     select: {
       tournament_id: true,
       name: true,
+    },
+  },
+  field: {
+    select: {
+      field_id: true,
+      name: true,
+      location: true,
+    },
+  },
+  vocalias: {
+    select: {
+      vocalUser: {
+        select: {
+          user_id: true,
+          user_name: true,
+        },
+      },
     },
   },
 };

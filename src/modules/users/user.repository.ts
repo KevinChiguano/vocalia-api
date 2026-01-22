@@ -69,6 +69,15 @@ export class UserRepository {
   async count(params: Prisma.usersCountArgs, tx?: PrismaTx) {
     return this.getClient(tx).users.count(params);
   }
+
+  async getRoles(tx?: PrismaTx) {
+    return this.getClient(tx).roles.findMany({
+      select: {
+        rol_id: true,
+        rol_name: true,
+      },
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

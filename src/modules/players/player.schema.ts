@@ -23,7 +23,7 @@ const playerBase = {
     .string()
     .regex(
       /^[0-9A-Z]{5,15}$/,
-      "El DNI debe tener entre 5 y 15 caracteres alfanuméricos."
+      "El DNI debe tener entre 5 y 15 caracteres alfanuméricos.",
     )
     .min(5, "El DNI debe tener al menos 5 caracteres.")
     .max(15, "El DNI no puede superar los 15 caracteres."),
@@ -34,8 +34,13 @@ const playerBase = {
     .positive("El ID del equipo debe ser positivo."),
 
   cardUrl: z.url("La URL de la tarjeta debe ser una URL válida.").optional(),
+  imageUrl: z.url("La URL de la imagen debe ser una URL válida.").optional(),
 
-  birthDate: z.string().datetime({ offset: true }).optional().or(z.string().optional()), // Allow ISO string or just string for simplicity, verifying later
+  birthDate: z
+    .string()
+    .datetime({ offset: true })
+    .optional()
+    .or(z.string().optional()), // Allow ISO string or just string for simplicity, verifying later
 
   categoryId: z.number().int().positive().optional(),
 
@@ -47,3 +52,6 @@ export const updatePlayerSchema = z.object(playerBase).partial();
 
 export type CreatePlayerInput = z.infer<typeof createPlayerSchema>;
 export type UpdatePlayerInput = z.infer<typeof updatePlayerSchema>;
+
+export const bulkCreatePlayerSchema = z.array(createPlayerSchema);
+export type BulkCreatePlayerInput = z.infer<typeof bulkCreatePlayerSchema>;

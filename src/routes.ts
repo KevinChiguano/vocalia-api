@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/users/user.routes";
-import leagueRoutes from "./modules/leagues/league.routes";
+
 import tournamentRoutes from "./modules/tournaments/tournament.routes";
 import tournamentTeamRoutes from "./modules/tournament-teams/tournament-team.routes";
 import teamRoutes from "./modules/teams/team.routes";
@@ -15,19 +15,23 @@ import actaRoutes from "./modules/actas/acta.routes";
 import matchPlayerRoutes from "./modules/match-players/match-player.routes";
 import statisticRoutes from "./modules/statistics/statistics.routes";
 import categoryRoutes from "./modules/categories/category.routes";
+import fieldRoutes from "./modules/fields/field.routes";
+
+import { userController } from "./modules/users/user.controller";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.get("/roles", userController.getRoles);
 
-router.use("/leagues", leagueRoutes);
 router.use("/tournaments", tournamentRoutes);
 router.use("/tournament-teams", tournamentTeamRoutes);
 
 router.use("/teams", teamRoutes);
 router.use("/players", playerRoutes);
 router.use("/categories", categoryRoutes);
+router.use("/fields", fieldRoutes);
 
 router.use("/matches", matchRoutes);
 router.use("/matches", actaRoutes);
