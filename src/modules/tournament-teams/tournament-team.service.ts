@@ -13,6 +13,8 @@ const mapTournamentTeamKeys = (tt: any) => {
   return {
     id: tt.tournament_team_id,
     tournamentId: tt.tournament_id,
+    teamId: Number(tt.team_id),
+    categoryId: tt.category_id ? Number(tt.category_id) : undefined,
     team: tt.team
       ? {
           id: tt.team.team_id,
@@ -25,7 +27,12 @@ const mapTournamentTeamKeys = (tt: any) => {
           id: tt.category.category_id,
           name: tt.category.name,
         }
-      : null,
+      : tt.team?.category
+        ? {
+            id: tt.team.category.category_id,
+            name: tt.team.category.name,
+          }
+        : null,
     played: tt.played,
     won: tt.won,
     drawn: tt.drawn,

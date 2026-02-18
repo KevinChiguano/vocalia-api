@@ -257,6 +257,8 @@ model vocalias {
   local_captain_id BigInt?
   away_captain_id  BigInt?
   observations     String?
+  arbitrator_name  String?
+  signatures       Json?
   vocalia_data     Json?
   created_at       DateTime? @default(now()) @db.Timestamptz(6)
 
