@@ -129,5 +129,8 @@ router.get("/match/:matchId", roleGuard(["ADMIN", "VOCAL"]), vocaliaController.g
  *             schema:
  *               $ref: '#/components/schemas/VocaliaListResponse'
  */
-router.get("/mine", roleGuard(["VOCAL"]), vocaliaController.listMine);
+router.get("/mine", roleGuard(["VOCAL", "ADMIN"]), vocaliaController.listMine);
+router.get("/financials", roleGuard(["ADMIN"]), vocaliaController.getFinancials);
+router.post("/verify-access", roleGuard(["ADMIN", "VOCAL"]), vocaliaController.verifyAccess);
+router.post("/:matchId/revert", roleGuard(["ADMIN", "VOCAL"]), vocaliaController.revert);
 export default router;

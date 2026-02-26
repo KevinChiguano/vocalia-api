@@ -1,4 +1,5 @@
 import { paginate } from "@/utils/pagination";
+import * as argon2 from "argon2";
 import { vocaliaRepository, vocaliaSelectFields } from "./vocalia.repository";
 import { convertToEcuadorTime } from "@/utils/convert.time";
 import prisma from "@/config/prisma";
@@ -44,7 +45,14 @@ const mapVocaliaKeys = (v) => {
         observations: v.observations,
         vocaliaData: v.vocalia_data,
         createdAt: convertToEcuadorTime(v.created_at),
+        vocalUser: v.vocalUser
+            ? {
+                name: v.vocalUser.user_name,
+                email: v.vocalUser.user_email,
+            }
+            : null,
         match: mapMatch(v.match),
+        signatures: v.signatures,
     };
 };
 export class VocaliaService {
@@ -100,12 +108,14 @@ export class VocaliaService {
             }
             const { tournament_id, local_team_id, away_team_id } = match;
             // 3.5 Actualizar vocaliaData (montos recolectados) si existe vocalía
-            if (data.vocaliaData) {
+            if (data.vocaliaData || data.arbitratorName || data.signatures) {
                 // Intentamos actualizar la vocalía si existe
                 await tx.vocalias.updateMany({
                     where: { match_id: BigInt(matchId) },
                     data: {
                         vocalia_data: data.vocaliaData,
+                        arbitrator_name: data.arbitratorName,
+                        signatures: data.signatures,
                     },
                 });
             }
@@ -258,6 +268,252 @@ export class VocaliaService {
             items: result.items.map(mapVocaliaKeys),
             pagination: result.pagination,
         };
+    }
+    async getFinancials(filters) {
+        const whereClause = {};
+        if (filters.tournamentId ||
+            filters.categoryId ||
+            filters.startDate ||
+            filters.endDate ||
+            filters.search) {
+            whereClause.match = {};
+            if (filters.tournamentId) {
+                whereClause.match.tournament_id = BigInt(filters.tournamentId);
+            }
+            if (filters.categoryId) {
+                whereClause.match.category = filters.categoryId;
+            }
+            if (filters.startDate && filters.endDate) {
+                const start = new Date(`${filters.startDate}T00:00:00.000Z`);
+                const end = new Date(`${filters.endDate}T23:59:59.999Z`);
+                whereClause.match.match_date = {
+                    gte: start,
+                    lte: end,
+                };
+            }
+            if (filters.search) {
+                const searchStr = filters.search.trim();
+                const searchAsNumber = parseInt(searchStr, 10);
+                whereClause.match.OR = [
+                    {
+                        localTeam: {
+                            team_name: { contains: searchStr, mode: "insensitive" },
+                        },
+                    },
+                    {
+                        awayTeam: {
+                            team_name: { contains: searchStr, mode: "insensitive" },
+                        },
+                    },
+                ];
+                if (!isNaN(searchAsNumber)) {
+                    whereClause.match.OR.push({ match_id: BigInt(searchAsNumber) });
+                }
+            }
+        }
+        const result = await paginate(vocaliaRepository, { page: filters.page, limit: filters.limit }, {
+            where: whereClause,
+            orderBy: { created_at: "desc" },
+            select: vocaliaSelectFields,
+        });
+        const items = result.items.map(mapVocaliaKeys);
+        let totalRevenue = 0;
+        let pendingPayments = 0;
+        let collectedToday = 0;
+        let outstandingDebtsAmount = 0;
+        const today = new Date().toDateString();
+        const transactions = items.map((v) => {
+            const localP = parseFloat(v.vocaliaData?.localAmount || "0");
+            const awayP = parseFloat(v.vocaliaData?.awayAmount || "0");
+            const totalMatchRevenue = localP + awayP;
+            let status = "pending";
+            if (v.match?.status === "finalizado") {
+                status = "paid";
+                if (totalMatchRevenue > 0 && (localP === 0 || awayP === 0)) {
+                    status = "partial";
+                }
+            }
+            else {
+                status = "pending";
+            }
+            totalRevenue += totalMatchRevenue;
+            // Unicamente los NO finalizados se consideran "partidos pendientes"
+            if (v.match?.status !== "finalizado") {
+                pendingPayments++;
+                // Asumimos un costo base (ej. $50.6) que aún falta por cobrar si está pendiente
+                outstandingDebtsAmount += 50.6;
+            }
+            if (v.createdAt && new Date(v.createdAt).toDateString() === today) {
+                collectedToday += totalMatchRevenue;
+            }
+            return {
+                id: v.matchId,
+                matchId: `M-${v.matchId}`,
+                teams: {
+                    local: v.match?.localTeam?.name || "Local",
+                    away: v.match?.awayTeam?.name || "Away",
+                },
+                category: v.match?.category || "General",
+                date: v.match?.date,
+                paymentTeamA: localP,
+                paymentTeamB: awayP,
+                totalMatchRevenue,
+                status,
+            };
+        });
+        return {
+            summary: {
+                totalRevenue,
+                pendingPayments,
+                collectedToday,
+                outstandingDebtsAmount,
+            },
+            transactions,
+            pagination: result.pagination,
+        };
+    }
+    async listAll(page, limit) {
+        const result = await paginate(vocaliaRepository, { page, limit }, {
+            orderBy: { created_at: "desc" },
+            select: vocaliaSelectFields,
+        });
+        return {
+            items: result.items.map(mapVocaliaKeys),
+            pagination: result.pagination,
+        };
+    }
+    async verifyAccess(matchId, passwordAttempt, currentUser) {
+        // 1. Check if user is Admin and password matches THEIR password
+        if (currentUser.rol === "ADMIN") {
+            // We need to fetch the admin's actual password from DB to compare
+            // Assuming currentUser from token might not have the password hash or we shouldn't trust it blindly if we want strict check
+            // But usually verifyAccess implies re-auth.
+            // Let's check against the vocal user assigned to the match.
+        }
+        // Better approach:
+        // If Admin: Can access if passwordAttempt matches THEIR password OR Assigned Vocal's password.
+        // If Vocal: Can access only if passwordAttempt matches THEIR password (and they are assigned).
+        // Let's fetch the vocal assigned
+        const vocalia = await vocaliaRepository.findByMatchId(matchId);
+        if (!vocalia)
+            throw new Error("Vocalía no encontrada");
+        const assignedVocalId = vocalia.vocal_user_id;
+        // Fetch the assigned vocal user to get password hash
+        const assignedVocal = await prisma.users.findUnique({
+            where: { user_id: assignedVocalId },
+        });
+        // Fetch current user (admin) to get password hash if needed
+        const currentDbUser = await prisma.users.findUnique({
+            where: { user_id: BigInt(currentUser.id) },
+        });
+        if (!assignedVocal)
+            throw new Error("Usuario vocal no encontrado");
+        // Check against Assigned Vocal
+        let isVocalPasswordValid = false;
+        if (assignedVocal) {
+            isVocalPasswordValid = await argon2.verify(assignedVocal.user_password, passwordAttempt);
+        }
+        // Check against Current User (Admin)
+        let isAdminPasswordValid = false;
+        if (currentUser.rol === "ADMIN" && currentDbUser) {
+            isAdminPasswordValid = await argon2.verify(currentDbUser.user_password, passwordAttempt);
+        }
+        if (isVocalPasswordValid || isAdminPasswordValid) {
+            return true;
+        }
+        throw new Error("Contraseña incorrecta");
+    }
+    async revertFinalization(matchId) {
+        return prisma.$transaction(async (tx) => {
+            const match = await tx.matches.findUnique({
+                where: { match_id: BigInt(matchId) },
+            });
+            if (!match)
+                throw new Error("Partido no encontrado");
+            if (match.status !== "finalizado")
+                throw new Error("El partido no está finalizado");
+            // We need to reverse the stats update.
+            // This requires knowing what was added.
+            // The current implementation calculates points based on score.
+            // We can recalculate what WAS added based on the CURRENT scores in the match record.
+            const { local_score, away_score, tournament_id, local_team_id, away_team_id, } = match;
+            const result = {
+                localPoints: 0,
+                awayPoints: 0,
+                localWon: 0,
+                localDraw: 0,
+                localLost: 0,
+                awayWon: 0,
+                awayDraw: 0,
+                awayLost: 0,
+            };
+            if (local_score > away_score) {
+                result.localPoints = 3;
+                result.localWon = 1;
+                result.awayLost = 1;
+            }
+            else if (local_score < away_score) {
+                result.awayPoints = 3;
+                result.awayWon = 1;
+                result.localLost = 1;
+            }
+            else {
+                result.localPoints = 1;
+                result.awayPoints = 1;
+                result.localDraw = 1;
+                result.awayDraw = 1;
+            }
+            // DECREMENT stats
+            const [localTT, awayTT] = await Promise.all([
+                tx.tournament_teams.findUnique({
+                    where: {
+                        uq_tournament_team: { tournament_id, team_id: local_team_id },
+                    },
+                }),
+                tx.tournament_teams.findUnique({
+                    where: {
+                        uq_tournament_team: { tournament_id, team_id: away_team_id },
+                    },
+                }),
+            ]);
+            if (localTT) {
+                await tx.tournament_teams.update({
+                    where: { tournament_team_id: localTT.tournament_team_id },
+                    data: {
+                        played: { decrement: 1 },
+                        won: { decrement: result.localWon },
+                        drawn: { decrement: result.localDraw },
+                        lost: { decrement: result.localLost },
+                        goals_for: { decrement: local_score },
+                        goals_against: { decrement: away_score },
+                        goal_diff: { decrement: local_score - away_score },
+                        points: { decrement: result.localPoints },
+                    },
+                });
+            }
+            if (awayTT) {
+                await tx.tournament_teams.update({
+                    where: { tournament_team_id: awayTT.tournament_team_id },
+                    data: {
+                        played: { decrement: 1 },
+                        won: { decrement: result.awayWon },
+                        drawn: { decrement: result.awayDraw },
+                        lost: { decrement: result.awayLost },
+                        goals_for: { decrement: away_score },
+                        goals_against: { decrement: local_score },
+                        goal_diff: { decrement: away_score - local_score },
+                        points: { decrement: result.awayPoints },
+                    },
+                });
+            }
+            // Set status back to en_curso
+            await tx.matches.update({
+                where: { match_id: BigInt(matchId) },
+                data: { status: "en_curso" },
+            });
+            await invalidateTournamentStats(Number(tournament_id));
+            return { ok: true, message: "Partido revertido a estado en curso" };
+        });
     }
 }
 export const vocaliaService = new VocaliaService();

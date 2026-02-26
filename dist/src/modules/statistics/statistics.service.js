@@ -41,10 +41,12 @@ export class StatisticsService {
                     id: p.player_id,
                     name: `${p.player_name} ${p.player_lastname ?? ""}`.trim(),
                     number: p.player_number,
+                    image: p.player_image_url,
                 },
                 team: {
                     id: p.team.team_id,
                     name: p.team.team_name,
+                    logo: p.team.team_logo,
                 },
                 matchesPlayed: matchesMap.get(Number(p.player_id)) || 0,
                 goals: goalsMap.get(Number(p.player_id)) || 0,
@@ -100,6 +102,7 @@ export class StatisticsService {
                 team: {
                     id: t.team_id,
                     name: t.team.team_name,
+                    logo: t.team.team_logo,
                 },
                 played: t.played,
                 won: t.won,
@@ -125,8 +128,9 @@ export class StatisticsService {
                 player_id: true,
                 player_name: true,
                 player_lastname: true,
+                player_image_url: true,
                 team: {
-                    select: { team_name: true },
+                    select: { team_name: true, team_logo: true },
                 },
             },
         });
@@ -136,8 +140,12 @@ export class StatisticsService {
                 player: {
                     id: p.player_id, // sanitized automatically
                     name: `${p.player_name} ${p.player_lastname ?? ""}`.trim(),
+                    image: p.player_image_url,
                 },
-                team: p.team.team_name,
+                team: {
+                    name: p.team.team_name,
+                    logo: p.team.team_logo,
+                },
                 goals: g._count.player_id, // sanitized automatically
             };
         });

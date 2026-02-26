@@ -32,6 +32,16 @@ export class TeamService {
         }, tx);
         return mapTeamKeys(newTeam);
     }
+    async createMany(data, tx) {
+        const teamsData = data.map((team) => ({
+            team_name: team.name,
+            team_logo: team.logo,
+            category_id: team.categoryId ?? null,
+            is_active: team.isActive ?? true,
+        }));
+        const result = await teamRepository.createMany(teamsData, tx);
+        return { count: result.count };
+    }
     async update(id, data, tx) {
         const updateData = {};
         if (data.name)

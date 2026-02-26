@@ -18,7 +18,9 @@ const teamBase = {
 };
 
 export const createTeamSchema = z.object(teamBase);
+export const bulkCreateTeamSchema = z.array(createTeamSchema);
 export const updateTeamSchema = z.object(teamBase).partial();
 
 export type CreateTeamInput = z.infer<typeof createTeamSchema>;
+export type BulkCreateTeamInput = z.infer<typeof bulkCreateTeamSchema>;
 export type UpdateTeamInput = z.infer<typeof updateTeamSchema>;

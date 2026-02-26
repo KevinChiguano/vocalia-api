@@ -318,6 +318,134 @@ export class VocaliaService {
     };
   }
 
+  async getFinancials(filters: any) {
+    const whereClause: any = {};
+
+    if (
+      filters.tournamentId ||
+      filters.categoryId ||
+      filters.startDate ||
+      filters.endDate ||
+      filters.search
+    ) {
+      whereClause.match = {};
+
+      if (filters.tournamentId) {
+        whereClause.match.tournament_id = BigInt(filters.tournamentId);
+      }
+
+      if (filters.categoryId) {
+        whereClause.match.category = filters.categoryId;
+      }
+
+      if (filters.startDate && filters.endDate) {
+        const start = new Date(`${filters.startDate}T00:00:00.000Z`);
+        const end = new Date(`${filters.endDate}T23:59:59.999Z`);
+        whereClause.match.match_date = {
+          gte: start,
+          lte: end,
+        };
+      }
+
+      if (filters.search) {
+        const searchStr = filters.search.trim();
+        const searchAsNumber = parseInt(searchStr, 10);
+
+        whereClause.match.OR = [
+          {
+            localTeam: {
+              team_name: { contains: searchStr, mode: "insensitive" },
+            },
+          },
+          {
+            awayTeam: {
+              team_name: { contains: searchStr, mode: "insensitive" },
+            },
+          },
+        ];
+
+        if (!isNaN(searchAsNumber)) {
+          whereClause.match.OR.push({ match_id: BigInt(searchAsNumber) });
+        }
+      }
+    }
+
+    const result = await paginate(
+      vocaliaRepository,
+      { page: filters.page, limit: filters.limit },
+      {
+        where: whereClause,
+        orderBy: { created_at: "desc" },
+        select: vocaliaSelectFields,
+      },
+    );
+
+    const items = result.items.map(mapVocaliaKeys);
+
+    let totalRevenue = 0;
+    let pendingPayments = 0;
+    let collectedToday = 0;
+    let outstandingDebtsAmount = 0;
+
+    const today = new Date().toDateString();
+
+    const transactions = items.map((v: any) => {
+      const localP = parseFloat(v.vocaliaData?.localAmount || "0");
+      const awayP = parseFloat(v.vocaliaData?.awayAmount || "0");
+      const totalMatchRevenue = localP + awayP;
+
+      let status = "pending";
+
+      if (v.match?.status === "finalizado") {
+        status = "paid";
+        if (totalMatchRevenue > 0 && (localP === 0 || awayP === 0)) {
+          status = "partial";
+        }
+      } else {
+        status = "pending";
+      }
+
+      totalRevenue += totalMatchRevenue;
+
+      // Unicamente los NO finalizados se consideran "partidos pendientes"
+      if (v.match?.status !== "finalizado") {
+        pendingPayments++;
+        // Asumimos un costo base (ej. $50.6) que aún falta por cobrar si está pendiente
+        outstandingDebtsAmount += 50.6;
+      }
+
+      if (v.createdAt && new Date(v.createdAt).toDateString() === today) {
+        collectedToday += totalMatchRevenue;
+      }
+
+      return {
+        id: v.matchId,
+        matchId: `M-${v.matchId}`,
+        teams: {
+          local: v.match?.localTeam?.name || "Local",
+          away: v.match?.awayTeam?.name || "Away",
+        },
+        category: v.match?.category || "General",
+        date: v.match?.date,
+        paymentTeamA: localP,
+        paymentTeamB: awayP,
+        totalMatchRevenue,
+        status,
+      };
+    });
+
+    return {
+      summary: {
+        totalRevenue,
+        pendingPayments,
+        collectedToday,
+        outstandingDebtsAmount,
+      },
+      transactions,
+      pagination: result.pagination,
+    };
+  }
+
   async listAll(page: number, limit: number) {
     const result = await paginate(
       vocaliaRepository,

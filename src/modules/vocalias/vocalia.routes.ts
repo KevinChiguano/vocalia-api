@@ -155,6 +155,13 @@ router.get(
  *               $ref: '#/components/schemas/VocaliaListResponse'
  */
 router.get("/mine", roleGuard(["VOCAL", "ADMIN"]), vocaliaController.listMine);
+
+router.get(
+  "/financials",
+  roleGuard(["ADMIN"]),
+  vocaliaController.getFinancials,
+);
+
 router.post(
   "/verify-access",
   roleGuard(["ADMIN", "VOCAL"]),

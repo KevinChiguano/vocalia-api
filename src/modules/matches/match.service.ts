@@ -74,7 +74,6 @@ export class MatchService {
           category: data.category,
           match_day: data.matchDay,
           match_date: data.matchDate,
-          // location: data.location,
           field_id: data.fieldId,
           status: data.status ?? "programado",
           local_score: 0,
@@ -83,7 +82,22 @@ export class MatchService {
         tx,
       );
 
-      return mapMatchKeys(newMatch);
+      if (data.vocalUserId !== undefined) {
+        await tx.vocalias.create({
+          data: {
+            match_id: newMatch.match_id,
+            vocal_user_id: BigInt(data.vocalUserId),
+            vocalia_data: {},
+          },
+        });
+      }
+
+      // Re-fetch match with details
+      const matchWithDetails = await matchRepository.findById(
+        newMatch.match_id,
+        tx,
+      );
+      return mapMatchKeys(matchWithDetails || newMatch);
     });
   }
 
@@ -164,6 +178,10 @@ export class MatchService {
 
     if (filter.tournamentId !== undefined) {
       where.tournament_id = filter.tournamentId;
+    }
+
+    if (filter.matchDay !== undefined) {
+      where.match_day = filter.matchDay;
     }
 
     if (filter.status !== undefined) {

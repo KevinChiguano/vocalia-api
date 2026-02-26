@@ -82,6 +82,34 @@ export const vocaliaController = {
     }
   },
 
+  getFinancials: async (req: Request, res: Response) => {
+    try {
+      const {
+        tournamentId,
+        categoryId,
+        startDate,
+        endDate,
+        page,
+        limit,
+        search,
+      } = req.query;
+      const filters = {
+        tournamentId: tournamentId ? Number(tournamentId) : undefined,
+        categoryId: categoryId ? String(categoryId) : undefined,
+        startDate: startDate ? String(startDate) : undefined,
+        endDate: endDate ? String(endDate) : undefined,
+        page: page ? Number(page) : 1,
+        limit: limit ? Number(limit) : 20,
+        search: search ? String(search) : undefined,
+      };
+
+      const result = await vocaliaService.getFinancials(filters);
+      return res.json(ok(result));
+    } catch (e: any) {
+      return handlePrismaError(e, res);
+    }
+  },
+
   listMine: async (req: Request, res: Response) => {
     if (!req.user) {
       return res.status(401).json({ ok: false, message: "Unauthorized" });

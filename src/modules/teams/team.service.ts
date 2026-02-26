@@ -1,7 +1,11 @@
 // team.service.ts
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { convertToEcuadorTime } from "@/utils/convert.time";
-import { CreateTeamInput, UpdateTeamInput } from "./team.schema";
+import {
+  CreateTeamInput,
+  UpdateTeamInput,
+  BulkCreateTeamInput,
+} from "./team.schema";
 import { paginate } from "@/utils/pagination";
 import { teamRepository, teamSelectFields } from "./team.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
@@ -39,6 +43,18 @@ export class TeamService {
     );
 
     return mapTeamKeys(newTeam);
+  }
+
+  async createMany(data: BulkCreateTeamInput, tx?: PrismaTx) {
+    const teamsData = data.map((team) => ({
+      team_name: team.name,
+      team_logo: team.logo,
+      category_id: team.categoryId ?? null,
+      is_active: team.isActive ?? true,
+    }));
+
+    const result = await teamRepository.createMany(teamsData, tx);
+    return { count: result.count };
   }
 
   async update(id: number, data: UpdateTeamInput, tx?: PrismaTx) {
