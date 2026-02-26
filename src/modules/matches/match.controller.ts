@@ -79,6 +79,7 @@ export const matchController = {
       tournamentId: parseNumber(req.query.tournamentId, { min: 1 }),
       status: parseArray(req.query.status),
       stage: parseString(req.query.stage),
+      matchDay: parseNumber(req.query.matchDay, { min: 1 }),
       matchDateFrom: parseDate(req.query.matchDateFrom),
       matchDateTo: parseDate(req.query.matchDateTo),
     };

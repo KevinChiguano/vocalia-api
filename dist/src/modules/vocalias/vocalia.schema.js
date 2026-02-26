@@ -8,6 +8,8 @@ const vocaliaBase = {
         .optional()
         .nullable(),
     vocaliaData: z.record(z.string(), z.any()).optional().nullable(),
+    arbitratorName: z.string().optional().nullable(),
+    signatures: z.record(z.string(), z.string()).optional().nullable(),
 };
 export const createVocaliaSchema = z.object({
     matchId: z

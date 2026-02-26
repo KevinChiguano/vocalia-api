@@ -7,7 +7,14 @@ export const vocaliaSelectFields = {
     away_captain_id: true,
     observations: true,
     vocalia_data: true,
+    signatures: true,
     created_at: true,
+    vocalUser: {
+        select: {
+            user_name: true,
+            user_email: true,
+        },
+    },
     match: {
         select: {
             match_id: true,

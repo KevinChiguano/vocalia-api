@@ -65,10 +65,12 @@ export class StatisticsRepository {
                 player_name: true,
                 player_lastname: true,
                 player_number: true,
+                player_image_url: true,
                 team: {
                     select: {
                         team_id: true,
                         team_name: true,
+                        team_logo: true,
                     },
                 },
             },
@@ -104,6 +106,7 @@ export class StatisticsRepository {
                 team: {
                     select: {
                         team_name: true,
+                        team_logo: true,
                     },
                 },
             },

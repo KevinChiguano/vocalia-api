@@ -3,7 +3,7 @@ import { teamController } from "./team.controller";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 import { roleGuard } from "@/middlewares/role.guard";
 import { validateSchema } from "@/middlewares/validateSchema";
-import { createTeamSchema, updateTeamSchema } from "./team.schema";
+import { createTeamSchema, updateTeamSchema, bulkCreateTeamSchema, } from "./team.schema";
 import { strictLimiter } from "@/middlewares/rateLimiter.middleware";
 const router = Router();
 router.use(authMiddleware.verifyToken);
@@ -34,6 +34,33 @@ router.use(authMiddleware.verifyToken);
  *         description: Acceso denegado
  */
 router.post("/", strictLimiter, roleGuard(["ADMIN"]), validateSchema(createTeamSchema), teamController.create);
+/**
+ * @openapi
+ * /teams/bulk:
+ *   post:
+ *     summary: Importar equipos masivamente
+ *     tags: [Teams]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/CreateTeamRequest'
+ *     responses:
+ *       201:
+ *         description: Equipos importados correctamente
+ *       400:
+ *         description: Error en la importación
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Acceso denegado
+ */
+router.post("/bulk", strictLimiter, roleGuard(["ADMIN"]), validateSchema(bulkCreateTeamSchema), teamController.bulkCreate);
 /**
  * @openapi
  * /teams/{id}:

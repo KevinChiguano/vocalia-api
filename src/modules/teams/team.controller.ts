@@ -16,6 +16,15 @@ export const teamController = {
       return handlePrismaError(e, res);
     }
   },
+  bulkCreate: async (req: Request, res: Response) => {
+    try {
+      const validated = req.body;
+      const result = await teamService.createMany(validated);
+      return res.status(201).json(ok(result));
+    } catch (e: any) {
+      return handlePrismaError(e, res);
+    }
+  },
   update: async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);

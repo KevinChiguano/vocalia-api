@@ -16,6 +16,7 @@ import matchPlayerRoutes from "./modules/match-players/match-player.routes";
 import statisticRoutes from "./modules/statistics/statistics.routes";
 import categoryRoutes from "./modules/categories/category.routes";
 import fieldRoutes from "./modules/fields/field.routes";
+import regulationRoutes from "./modules/regulation/regulation.routes";
 
 import { userController } from "./modules/users/user.controller";
 
@@ -45,5 +46,6 @@ router.use("/vocalias", vocaliaRoutes);
 router.use("/match-players", matchPlayerRoutes);
 
 router.use("/statistics", statisticRoutes);
+router.use("/regulation", regulationRoutes);
 
 export default router;

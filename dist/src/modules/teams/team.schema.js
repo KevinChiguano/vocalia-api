@@ -13,4 +13,5 @@ const teamBase = {
     isActive: z.boolean().optional(),
 };
 export const createTeamSchema = z.object(teamBase);
+export const bulkCreateTeamSchema = z.array(createTeamSchema);
 export const updateTeamSchema = z.object(teamBase).partial();

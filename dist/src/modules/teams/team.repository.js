@@ -38,6 +38,11 @@ export class TeamRepository {
             select: teamSelectFields,
         });
     }
+    async createMany(data, tx) {
+        return this.getClient(tx).teams.createMany({
+            data,
+        });
+    }
     async update(id, data, tx) {
         return this.getClient(tx).teams.update({
             where: { team_id: id },

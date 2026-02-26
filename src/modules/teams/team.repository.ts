@@ -47,6 +47,12 @@ export class TeamRepository {
     });
   }
 
+  async createMany(data: Prisma.teamsCreateManyInput[], tx?: PrismaTx) {
+    return this.getClient(tx).teams.createMany({
+      data,
+    });
+  }
+
   async update(id: number, data: Prisma.teamsUpdateInput, tx?: PrismaTx) {
     return this.getClient(tx).teams.update({
       where: { team_id: id },

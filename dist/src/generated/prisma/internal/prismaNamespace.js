@@ -80,7 +80,8 @@ export const ModelName = {
     tournaments: 'tournaments',
     vocalias: 'vocalias',
     match_players: 'match_players',
-    tournament_teams: 'tournament_teams'
+    tournament_teams: 'tournament_teams',
+    regulation_articles: 'regulation_articles'
 };
 /**
  * Enums
@@ -195,6 +196,8 @@ export const VocaliasScalarFieldEnum = {
     local_captain_id: 'local_captain_id',
     away_captain_id: 'away_captain_id',
     observations: 'observations',
+    arbitrator_name: 'arbitrator_name',
+    signatures: 'signatures',
     vocalia_data: 'vocalia_data',
     created_at: 'created_at'
 };
@@ -220,6 +223,18 @@ export const Tournament_teamsScalarFieldEnum = {
     created_at: 'created_at',
     updated_at: 'updated_at',
     category_id: 'category_id'
+};
+export const Regulation_articlesScalarFieldEnum = {
+    article_id: 'article_id',
+    article_num: 'article_num',
+    title: 'title',
+    description: 'description',
+    sanction: 'sanction',
+    badge_variant: 'badge_variant',
+    category: 'category',
+    is_active: 'is_active',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
 };
 export const SortOrder = {
     asc: 'asc',
