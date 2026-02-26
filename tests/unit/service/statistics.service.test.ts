@@ -52,7 +52,7 @@ describe("StatisticsService", () => {
   describe("playersStatsByTournament()", () => {
     it("retorna datos desde cache si existe", async () => {
       (redis.get as any).mockResolvedValue(
-        JSON.stringify({ items: [], pagination: {} })
+        JSON.stringify({ items: [], pagination: {} }),
       );
 
       const result = await statisticsService.playersStatsByTournament(1);
@@ -74,7 +74,9 @@ describe("StatisticsService", () => {
         },
       ]);
 
-      (statisticsRepository.countPlayersByTournament as any).mockResolvedValue(1);
+      (statisticsRepository.countPlayersByTournament as any).mockResolvedValue(
+        1,
+      );
 
       (statisticsRepository.goalsByPlayer as any).mockResolvedValue([
         { player_id: 1, _count: { player_id: 3 } },
@@ -149,7 +151,7 @@ describe("StatisticsService", () => {
       const result = await statisticsService.topScorersByTournament(1);
 
       expect(result[0].goals).toBe(5);
-      expect(result[0].team).toBe("Team B");
+      expect(result[0].team.name).toBe("Team B");
     });
   });
 });
