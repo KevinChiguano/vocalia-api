@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "echo 'No build step required with tsx'",
-    "start": "tsx src/server.ts",
+    "start": "npx tsx src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:pull": "prisma db pull",
     "prisma:studio": "prisma studio",
@@ -33,6 +33,8 @@
     "morgan": "^1.10.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "winston": "^3.18.3",
     "zod": "^4.1.13"
   },
