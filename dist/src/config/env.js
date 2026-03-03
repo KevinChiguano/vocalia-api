@@ -42,6 +42,8 @@ const envSchema = z.object({
         .transform((v) => Number(v))
         .refine((v) => v >= 1, { message: "ARGON_PARALLEL debe ser >= 1" })
         .default(1),
+    // Variable para Producción (Upstash / Redis Cloud)
+    REDIS_URL: z.string().url().optional(),
     REDIS_HOST: z.string().default("127.0.0.1"),
     REDIS_PORT: z
         .string()

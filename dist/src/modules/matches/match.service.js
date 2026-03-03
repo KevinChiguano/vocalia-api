@@ -21,12 +21,14 @@ const mapMatchKeys = (match) => {
             ? {
                 id: match.localTeam.team_id,
                 name: match.localTeam.team_name,
+                logo: match.localTeam.team_logo,
             }
             : null,
         awayTeam: match.awayTeam
             ? {
                 id: match.awayTeam.team_id,
                 name: match.awayTeam.team_name,
+                logo: match.awayTeam.team_logo,
             }
             : null,
         tournament: match.tournament

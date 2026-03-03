@@ -120,7 +120,7 @@ describe("StatisticsService", () => {
             ]);
             const result = await statisticsService.topScorersByTournament(1);
             expect(result[0].goals).toBe(5);
-            expect(result[0].team).toBe("Team B");
+            expect(result[0].team.name).toBe("Team B");
         });
     });
 });
