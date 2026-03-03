@@ -23,12 +23,14 @@ export const matchSelectFields = {
     select: {
       team_id: true,
       team_name: true,
+      team_logo: true,
     },
   },
   awayTeam: {
     select: {
       team_id: true,
       team_name: true,
+      team_logo: true,
     },
   },
   tournament: {
