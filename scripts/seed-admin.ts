@@ -6,15 +6,15 @@ async function seedAdmin() {
 
   // 1. Crear roles si no existen
   const adminRole = await prisma.roles.upsert({
-    where: { rol_name: "admin" },
+    where: { rol_name: "ADMIN" },
     update: {},
-    create: { rol_name: "admin" },
+    create: { rol_name: "ADMIN" },
   });
 
   const vocalRole = await prisma.roles.upsert({
-    where: { rol_name: "vocal" },
+    where: { rol_name: "VOCAL" },
     update: {},
-    create: { rol_name: "vocal" },
+    create: { rol_name: "VOCAL" },
   });
 
   console.log(
@@ -24,8 +24,8 @@ async function seedAdmin() {
   );
 
   // 2. Crear usuario administrador
-  const adminEmail = "admin@vocalia.com";
-  const rawPassword = "admin"; // Contraseña temporal por defecto
+  const adminEmail = "admin@gmail.com";
+  const rawPassword = "admin123"; // Contraseña temporal por defecto
 
   // Encriptar la contraseña usando Argon2 tal como lo espera auth.service.ts
   const hashedPassword = await argon2.hash(rawPassword);
