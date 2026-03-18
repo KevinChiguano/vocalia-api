@@ -145,7 +145,11 @@ router.put(
  *               status:
  *                 type: string
  */
-router.put("/:id/status", matchController.updateStatus);
+router.put(
+  "/:id/status",
+  roleGuard(["ADMIN", "VOCAL"]),
+  matchController.updateStatus,
+);
 
 /**
  * @openapi
