@@ -39,7 +39,7 @@ jobs:
           echo "🗄️ Generando cliente Prisma"
           npx prisma generate
 
-          echo "📦 Aplicando migraciones en producción"
+          echo "📦 Aplicando migraciones en producción "
           npx prisma migrate deploy
 
           echo "🚀 Reiniciando backend con PM2"
