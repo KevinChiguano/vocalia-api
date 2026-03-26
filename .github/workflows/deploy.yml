@@ -1,0 +1,57 @@
+name: 🚀 Deploy API Vocalia
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v3
+
+      - name: 🔐 Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy seguro en servidor
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+
+          set -e  # Terminar si cualquier comando falla
+
+          # Corregimos la ruta al nombre real de la carpeta que vimos antes
+          cd /var/www/vocalia/vocalia-api
+
+          echo "📌 Sincronizando repositorio"
+          git fetch --all
+          git reset --hard origin/main
+
+          echo "✅ Instalando dependencias de Node.js"
+          npm install
+
+          echo "🗄️ Generando cliente Prisma"
+          npx prisma generate
+
+          echo "📦 Aplicando migraciones en producción"
+          npx prisma migrate deploy
+
+          echo "🚀 Reiniciando backend con PM2"
+          if pm2 describe vocalia-api > /dev/null; then
+            # Si ya existe, reiniciamos para que tome cambios de código
+            pm2 restart vocalia-api --update-env
+          else
+            # Si es la primera vez (con el nombre exacto que usamos)
+            pm2 start "npx tsx src/server.ts" --name vocalia-api
+          fi
+          pm2 save
+
+          echo "✅ Deploy completado correctamente"
+
+          EOF
