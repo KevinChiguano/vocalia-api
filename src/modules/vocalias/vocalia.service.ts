@@ -95,6 +95,10 @@ export class VocaliaService {
       updateData.observations = data.observations;
     if (data.vocaliaData !== undefined)
       updateData.vocalia_data = data.vocaliaData;
+    if (data.arbitratorName !== undefined)
+      updateData.arbitrator_name = data.arbitratorName;
+    if (data.signatures !== undefined)
+      updateData.signatures = data.signatures;
 
     const updated = await vocaliaRepository.update(matchId, updateData);
     return mapVocaliaKeys(updated);
@@ -108,6 +112,7 @@ export class VocaliaService {
       vocaliaData?: any;
       arbitratorName?: string;
       signatures?: any;
+      observations?: string;
     },
   ) {
     const finalLocalScore = data.localScore;
@@ -140,7 +145,7 @@ export class VocaliaService {
       const { tournament_id, local_team_id, away_team_id } = match;
 
       // 3.5 Actualizar vocaliaData (montos recolectados) si existe vocalía
-      if (data.vocaliaData || data.arbitratorName || data.signatures) {
+      if (data.vocaliaData || data.arbitratorName || data.signatures || data.observations) {
         // Intentamos actualizar la vocalía si existe
         await tx.vocalias.updateMany({
           where: { match_id: BigInt(matchId) },
@@ -148,6 +153,7 @@ export class VocaliaService {
             vocalia_data: data.vocaliaData,
             arbitrator_name: data.arbitratorName,
             signatures: data.signatures,
+            observations: data.observations,
           },
         });
       }
@@ -338,13 +344,18 @@ export class VocaliaService {
         whereClause.match.category = filters.categoryId;
       }
 
-      if (filters.startDate && filters.endDate) {
-        const start = new Date(`${filters.startDate}T00:00:00.000Z`);
-        const end = new Date(`${filters.endDate}T23:59:59.999Z`);
-        whereClause.match.match_date = {
-          gte: start,
-          lte: end,
-        };
+      if (filters.startDate || filters.endDate) {
+        whereClause.match.match_date = {};
+        if (filters.startDate) {
+          whereClause.match.match_date.gte = new Date(
+            `${filters.startDate}T00:00:00.000Z`,
+          );
+        }
+        if (filters.endDate) {
+          whereClause.match.match_date.lte = new Date(
+            `${filters.endDate}T23:59:59.999Z`,
+          );
+        }
       }
 
       if (filters.search) {

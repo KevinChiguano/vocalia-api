@@ -51,9 +51,12 @@ export class MatchPlayerRepository {
     });
   }
 
-  async deleteByMatch(matchId: number, tx?: PrismaTx) {
+  async deleteByMatch(matchId: number, teamId?: number, tx?: PrismaTx) {
+    const where: any = { match_id: matchId };
+    if (teamId) where.team_id = teamId;
+
     return this.getClient(tx).match_players.deleteMany({
-      where: { match_id: matchId },
+      where,
     });
   }
 }

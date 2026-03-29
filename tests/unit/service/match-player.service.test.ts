@@ -26,7 +26,7 @@ describe("MatchPlayerService", () => {
         players: [{ playerId: 10, isStarting: true }, { playerId: 11 }],
       });
 
-      expect(matchPlayerRepository.deleteByMatch).toHaveBeenCalledWith(1, {});
+      expect(matchPlayerRepository.deleteByMatch).toHaveBeenCalledWith(1, 2, {});
       expect(matchPlayerRepository.createMany).toHaveBeenCalled();
       expect(result).toEqual({
         matchId: 1,

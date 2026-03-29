@@ -26,7 +26,7 @@ export const matchPlayerController = {
 
   deleteByMatch: async (req: Request, res: Response) => {
     try {
-      const id = Number(req.params.id);
+      const id = Number(req.params.matchId);
       await matchPlayerService.deleteByMatch(id);
       return res.json(ok("Jugadores del partido eliminado."));
     } catch (e: any) {

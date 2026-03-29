@@ -31,8 +31,8 @@ const mapMatchPlayerKeys = (mp: any) => {
 export class MatchPlayerService {
   async bulkCreate(data: BulkCreateMatchPlayerInput) {
     return prisma.$transaction(async (tx) => {
-      // Limpia la planilla previa (si existe)
-      await matchPlayerRepository.deleteByMatch(data.matchId, tx);
+      // Limpia la planilla del equipo específico en este partido
+      await matchPlayerRepository.deleteByMatch(data.matchId, data.teamId, tx);
 
       const payload = data.players.map((p) => ({
         match_id: data.matchId,

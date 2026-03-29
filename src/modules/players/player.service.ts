@@ -10,6 +10,7 @@ import { paginate } from "@/utils/pagination";
 import { playerRepository, playerSelectFields } from "./player.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
 import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
+import { deleteFile } from "@/utils/supabase";
 
 const mapPlayerKeys = (player: any) => {
   if (!player) return null;
@@ -88,8 +89,20 @@ export class PlayerService {
     if (data.lastname) updateData.player_lastname = data.lastname;
     if (data.number) updateData.player_number = data.number;
     if (data.dni) updateData.player_dni = data.dni;
-    if (data.cardUrl) updateData.card_image_url = data.cardUrl;
-    if (data.imageUrl) updateData.player_image_url = data.imageUrl;
+    if (data.cardUrl !== undefined) {
+      updateData.card_image_url = data.cardUrl;
+      const currentPlayer = await playerRepository.findByDni(dni);
+      if (currentPlayer?.card_image_url && currentPlayer.card_image_url !== data.cardUrl) {
+        await deleteFile(currentPlayer.card_image_url);
+      }
+    }
+    if (data.imageUrl !== undefined) {
+      updateData.player_image_url = data.imageUrl;
+      const currentPlayer = await playerRepository.findByDni(dni);
+      if (currentPlayer?.player_image_url && currentPlayer.player_image_url !== data.imageUrl) {
+        await deleteFile(currentPlayer.player_image_url);
+      }
+    }
     if (data.birthDate) updateData.birth_date = new Date(data.birthDate);
     if (data.teamId) updateData.team_id = data.teamId;
     if (data.categoryId) updateData.category_id = data.categoryId;
@@ -118,6 +131,15 @@ export class PlayerService {
 
   async delete(dni: string, tx?: PrismaTx) {
     try {
+      // Limpiamos los archivos de Supabase si existen antes de borrar el jugador
+      const currentPlayer = await playerRepository.findByDni(dni);
+      if (currentPlayer?.card_image_url) {
+        await deleteFile(currentPlayer.card_image_url);
+      }
+      if (currentPlayer?.player_image_url) {
+        await deleteFile(currentPlayer.player_image_url);
+      }
+
       await playerRepository.delete(dni, tx); // Uso del Repository
       return "Jugador eliminado";
     } catch (e) {
