@@ -10,6 +10,7 @@ import { paginate } from "@/utils/pagination";
 import { teamRepository, teamSelectFields } from "./team.repository"; // Importación clave
 import type { PrismaTx } from "@/config/prisma.types";
 import { buildSearchFilter, buildBooleanFilter } from "@/utils/filter.builder";
+import { deleteFile } from "@/utils/supabase";
 
 const mapTeamKeys = (team: any) => {
   if (!team) return null;
@@ -61,10 +62,16 @@ export class TeamService {
     const updateData: any = {};
 
     if (data.name) updateData.team_name = data.name;
-    if (data.logo) updateData.team_logo = data.logo;
+    if (data.logo !== undefined) {
+      updateData.team_logo = data.logo;
 
-    if (data.categoryId !== undefined) {
-      updateData.category_id = data.categoryId;
+      // Si ha cambiado el logo, intentamos borrar el anterior de Supabase
+      if (tx === undefined) {
+        const currentTeam = await teamRepository.findById(id);
+        if (currentTeam?.team_logo && currentTeam.team_logo !== data.logo) {
+          await deleteFile(currentTeam.team_logo);
+        }
+      }
     }
 
     if (typeof data.isActive === "boolean")
@@ -87,6 +94,12 @@ export class TeamService {
 
   async delete(id: number, tx?: PrismaTx) {
     try {
+      // Limpiamos el archivo de Supabase si existe antes de borrar el equipo
+      const currentTeam = await teamRepository.findById(id);
+      if (currentTeam?.team_logo) {
+        await deleteFile(currentTeam.team_logo);
+      }
+
       await teamRepository.delete(id, tx); // Uso del Repository
       return "Equipo eliminado";
     } catch (e) {

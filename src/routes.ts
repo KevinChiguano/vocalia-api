@@ -17,6 +17,7 @@ import statisticRoutes from "./modules/statistics/statistics.routes";
 import categoryRoutes from "./modules/categories/category.routes";
 import fieldRoutes from "./modules/fields/field.routes";
 import regulationRoutes from "./modules/regulation/regulation.routes";
+import uploadRoutes from "./modules/upload/upload.routes";
 
 import { userController } from "./modules/users/user.controller";
 
@@ -47,5 +48,6 @@ router.use("/match-players", matchPlayerRoutes);
 
 router.use("/statistics", statisticRoutes);
 router.use("/regulation", regulationRoutes);
+router.use("/upload", uploadRoutes);
 
 export default router;

@@ -106,7 +106,17 @@ Opcionalmente, abrir Prisma Studio:
 npx prisma studio
 ```
 
-### 4️⃣ Ejecutar el servidor en desarrollo
+### 4️⃣ Poblar la base de datos (Opcional)
+
+Para crear los roles iniciales y un usuario administrador por defecto:
+
+```bash
+npx tsx scripts/seed-admin.ts
+```
+
+> **Nota:** El usuario creado por defecto es `admin@gmail.com` con la contraseña `admin123`.
+
+### 5️⃣ Ejecutar el servidor en desarrollo
 
 ```bash
 npm run dev

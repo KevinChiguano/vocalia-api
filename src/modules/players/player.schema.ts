@@ -33,8 +33,8 @@ const playerBase = {
     .int("El ID del equipo debe ser un entero.")
     .positive("El ID del equipo debe ser positivo."),
 
-  cardUrl: z.url("La URL de la tarjeta debe ser una URL válida.").optional(),
-  imageUrl: z.url("La URL de la imagen debe ser una URL válida.").optional(),
+  cardUrl: z.string().url("La URL de la tarjeta debe ser una URL válida.").optional().or(z.literal("")),
+  imageUrl: z.string().url("La URL de la imagen debe ser una URL válida.").optional().or(z.literal("")),
 
   birthDate: z
     .string()
